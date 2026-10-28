@@ -1,0 +1,203 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE_TITLE } from '../consts';
+import { examples, lab, MANTRA, type Status } from '../data/lab';
+
+const columns: { status: Status; blurb: string }[] = [
+	{ status: 'Driving', blurb: 'How I work every day.' },
+	{ status: 'Testing', blurb: 'On real work, not decided yet.' },
+	{ status: 'Moved on', blurb: 'Tried it, kept a lesson, dropped the rest.' },
+];
+
+const layers = [
+	{
+		name: 'Prompt',
+		size: 'thin',
+		width: 22,
+		body: 'One or two sentences. Say what you want back, not how to think.',
+		sample: '"Explain Astro\'s collections via Django, as an HTML artifact."',
+	},
+	{
+		name: 'Artifacts and context',
+		size: 'thick',
+		width: 100,
+		body: 'Everything the agent can read going in, and something rich coming out.',
+		sample: 'In: files, git history, past artifacts, screenshots. Out: an HTML page, a diagram, a deck.',
+	},
+	{
+		name: 'Skills',
+		size: 'thin',
+		width: 22,
+		body: 'A few lines each: when to use it and what to avoid. The model already knows the rest.',
+		sample: '"Make it a one-page HTML artifact. No walls of text."',
+	},
+];
+---
+
+<Base title={`Lab · ${SITE_TITLE}`} description="The workflows and tools I'm driving, testing and have moved on from.">
+	<header style="display: flex; flex-direction: column; gap: 16px;">
+		<h1 class="serif" style="margin: 0; font-size: clamp(44px, 9vw, 64px); line-height: 1.05;">Lab</h1>
+		<p class="muted" style="margin: 0;">
+			I try workflows on real work before I recommend them. This page shows what I'm using now, what I'm
+			testing, and what I've moved on from. Each one gets a log entry once I know whether it stuck.
+		</p>
+	</header>
+
+	<section style="display: flex; flex-direction: column; gap: 20px;">
+		<h2 class="label">Current driver</h2>
+		<p class="serif" style="margin: 0; font-size: clamp(26px, 5vw, 34px); line-height: 1.2; font-style: italic; color: var(--accent);">
+			{MANTRA}
+		</p>
+		<div class="layers" role="list">
+			{
+				layers.map((l) => (
+					<div class="layer" role="listitem">
+						<div class="layer-head">
+							<span>{l.name}</span>
+							<span class={`chip ${l.size === 'thick' ? 'chip-on' : ''}`}>{l.size}</span>
+						</div>
+						<div class="bar-track" aria-hidden="true">
+							<div class={`bar bar-${l.size}`} style={`width: ${l.width}%;`} />
+						</div>
+						<p class="muted" style="margin: 0; font-size: 15px;">{l.body}</p>
+						<p class="faint" style="margin: 0; font-size: 14px;">{l.sample}</p>
+					</div>
+				))
+			}
+		</div>
+		<p class="muted" style="margin: 0; font-size: 16px;">
+			I learned the idea from <a href="https://x.com/trq212/status/2052809885763747935">Thariq Shihipar's writing</a>
+			and was teaching it in our September workshop.
+			<a href="https://x.com/karpathy/status/2105819303471976479">Andrej Karpathy</a> made the same case in October.
+		</p>
+	</section>
+
+	<section style="display: flex; flex-direction: column; gap: 20px;">
+		<h2 class="label">The board</h2>
+		<div class="board">
+			{
+				columns.map((c) => (
+					<div class="col">
+						<div class="col-head">
+							<span class={`dot dot-${c.status === 'Driving' ? 'on' : c.status === 'Testing' ? 'mid' : 'off'}`} />
+							<span style="font-weight: 500;">{c.status}</span>
+							<span class="faint" style="font-size: 13px;">
+								{lab.filter((i) => i.status === c.status).length}
+							</span>
+						</div>
+						<p class="faint" style="margin: 0; font-size: 13px;">{c.blurb}</p>
+						{lab
+							.filter((i) => i.status === c.status)
+							.map((i) => (
+								<article class={`card ${c.status === 'Moved on' ? 'card-off' : ''}`}>
+									<h3 class="serif" style="margin: 0; font-size: 22px; line-height: 1.15;">{i.name}</h3>
+									<p class="faint" style="margin: 0; font-size: 13px;">
+										{i.href ? <a href={i.href}>{i.by}</a> : i.by}
+									</p>
+									<p class="muted" style="margin: 0; font-size: 15px; line-height: 1.55;">{i.body}</p>
+								</article>
+							))}
+					</div>
+				))
+			}
+		</div>
+	</section>
+
+	<section style="display: flex; flex-direction: column; gap: 16px;">
+		<h2 class="label">Artifacts made this way</h2>
+		{
+			examples.map((e) => (
+				<a class="entry" href={e.href} style="flex-direction: column; gap: 2px;">
+					<span>{e.title} →</span>
+					<span class="faint">{e.body}</span>
+				</a>
+			))
+		}
+	</section>
+</Base>
+
+<style>
+	.layers {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+		padding: 20px;
+		background: var(--code-bg);
+		border-radius: 6px;
+	}
+	.layer {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.layer-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+		font-weight: 500;
+	}
+	.bar-track {
+		display: flex;
+		justify-content: center;
+	}
+	.bar {
+		border-radius: 4px;
+		background: var(--underline);
+	}
+	.bar-thin {
+		height: 10px;
+	}
+	.bar-thick {
+		height: 44px;
+		background: var(--accent);
+	}
+	.board {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 16px;
+	}
+	.col {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		min-width: 0;
+	}
+	.col-head {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		border-bottom: 1px solid var(--rule);
+		padding-bottom: 8px;
+	}
+	.dot {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+	}
+	.dot-on {
+		background: var(--accent);
+	}
+	.dot-mid {
+		background: var(--underline);
+	}
+	.dot-off {
+		border: 1.5px solid var(--faint);
+	}
+	.card {
+		border: 1px solid var(--rule);
+		border-radius: 6px;
+		padding: 14px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.card-off {
+		border-style: dashed;
+	}
+	@media (max-width: 640px) {
+		.board {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+</style>

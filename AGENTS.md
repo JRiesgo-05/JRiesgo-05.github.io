@@ -24,4 +24,4 @@ Consult these guides before working on related tasks:
 ## Learning log
 
 Log entries live in `src/content/log/*.md`. Frontmatter: `title`, `description`, `pubDate` (YYYY-MM-DD), optional `tags`, `updatedDate`, `draft`.
-When asked to log a learning, write the entry in three parts: what I learned, the principle behind it, and the angle that made it click. Keep it short and plain.
+Before writing or editing any copy (pages or log entries), read `WRITING.md` and follow it. It covers voice, structure, example prompts and what to avoid.

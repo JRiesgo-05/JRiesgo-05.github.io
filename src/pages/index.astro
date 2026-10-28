@@ -3,6 +3,9 @@ import { getCollection } from 'astro:content';
 import FormattedDate from '../components/FormattedDate.astro';
 import Base from '../layouts/Base.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { lab, type Status } from '../data/lab';
+
+const board: Status[] = ['Driving', 'Testing', 'Moved on'];
 
 const recent = (await getCollection('log', ({ data }) => !data.draft))
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -11,15 +14,31 @@ const recent = (await getCollection('log', ({ data }) => !data.draft))
 const principles = [
 	{
 		title: 'Learn through what you know',
-		body: 'I point my agents at what I already understand: my analogies, my past projects. Then I edit ruthlessly until the explanation is short enough to be mine.',
+		body: "I don't ask an agent to explain something from scratch. I tell it what I already know and ask it to build from there. Then I cut the answer down. If it's longer than a few sentences, I don't understand it yet.",
+		prompt:
+			"Explain Astro's content collections in terms of Django models and templates, as a one-page HTML artifact. Keep the text under five sentences, and show where the comparison breaks.",
+		result: { href: '/examples/astro-vs-django/', label: 'See what this prompt made' },
+	},
+	{
+		title: 'Thin prompts, thick artifacts',
+		mantra: 'Thin prompts + thick artifacts and context + thin skills.',
+		body: "My prompts are short. What I hand the agent is thick: the files, the history, the examples. What I ask back is thick too: an HTML page or a diagram instead of a wall of text. My skills stay thin, a few lines each. I learned this from Thariq Shihipar's writing and was teaching it in our September workshop. Andrej Karpathy made the same case in October: ask for diagrams and web pages, not paragraphs.",
+		refs: [
+			{ href: 'https://x.com/trq212/status/2052809885763747935', label: 'Thariq: The Unreasonable Effectiveness of HTML' },
+			{ href: 'https://x.com/karpathy/status/2105819303471976479', label: 'Karpathy on understanding LLM outputs' },
+		],
 	},
 	{
 		title: 'Principles over band-aids',
-		body: "A patch fixes today's bug. A principle fixes the next ten. I keep digging until I find the rule underneath.",
+		body: "A patch fixes today's bug. A principle fixes the next ten. When something breaks, I don't stop at the fix. I keep asking until I find the rule underneath, and that rule is what I write down.",
+		prompt:
+			"This test fails about one run in ten. Don't fix it yet. List what has to be true for it to pass every time, and tell me which of those isn't.",
 	},
 	{
 		title: 'Change the angle',
-		body: 'Code is one layer over the real job: shaping inputs into outcomes. Googling and asking an agent are the same act. The agent just moves information faster.',
+		body: "Code is one layer over the real job, which is turning inputs into outcomes. Googling and asking an agent are the same act: moving information into my head. The agent just moves it faster, so I spend the saved time one level up.",
+		prompt:
+			'Before writing any code, describe the inputs this feature gets and the output it must produce. Then tell me whether code is the right layer to solve it.',
 	},
 ];
 
@@ -29,21 +48,21 @@ const workshops = [
 		title: 'Agent Building Workshop',
 		href: '/workshops/agent-building/',
 		audience: 'Internal, about 30 colleagues from the COO to QA. Slides only, speaker notes removed.',
-		body: 'A builder\'s follow-up: one ticket-triage agent built end to end. Tools, MCP, frameworks, LLM as a judge and model routing on day one; testing agents before they ship on day two.',
+		body: 'The follow-up for people who wanted to build. We built one ticket-triage agent end to end: tools, MCP, LLM as a judge and model routing on day one, then how to test it before it ships on day two.',
 	},
 	{
 		date: 'Sep 15–16, 2026',
 		title: 'AI Fluency & Claude Code Workshop',
 		href: '/workshops/ai-fluency/',
 		audience: 'Internal, about 30 colleagues from the COO to QA. Slides only, speaker notes removed.',
-		body: 'Two days on generative AI from the ground up: tokens, embeddings and the context window, then MCP, specs and day-to-day work in Claude Code.',
+		body: 'Two days for everyone, not just engineers. We started with how a model reads (tokens, embeddings, the context window) and ended with the way I actually work in Claude Code every day.',
 	},
 	{
 		date: 'Jun 2025',
 		title: 'LLMs and Generative AI, guest workshop at T.I.P.',
 		href: 'https://www.linkedin.com/posts/jerimiah-riesgo-598070190_genai-guestspeaker-al-activity-7343175397066362880-XBio',
 		audience: 'Computer Engineering students, Technological Institute of the Philippines.',
-		body: 'Invited by my alma mater to walk students through how large language models work and where generative AI is useful in practice.',
+		body: 'My alma mater invited me back to walk students through how large language models work and where they help in practice.',
 	},
 ];
 
@@ -79,10 +98,19 @@ const work = [
 			<em class="serif" style="font-size: 24px; color: var(--accent);">This is the log.</em>
 		</p>
 		<p class="muted" style="margin: 0;">
-			Senior Python developer at WPP Media, moving into machine learning engineering. At work I lead
-			our agentic coding practice: workshops, reference builds, and the guardrails that make it safe
-			for production. Here I write down what I learn, the principle behind it, and the angle that made
-			it click.
+			I'm a senior Python developer at WPP Media. Most of my day is agents: getting our AI product
+			team's work from integration to production, R&amp;D on agentic systems, and testing new models
+			as they land.
+		</p>
+		<p style="margin: 0;">
+			I built this site to show my journey with AI, from my first GPT-2 experiment to how I work today.
+			When I talk about my workflow, I want something real to point at: the skills, repos and workflows
+			I've tried, what stuck, and what didn't.
+		</p>
+		<p class="muted" style="margin: 0;">
+			It's also how I keep what I learn. An answer that took ten seconds to get takes ten seconds to
+			lose, so I write down what stuck: what I learned, the principle behind it, and the angle that
+			made it click.
 		</p>
 		<p class="faint" style="margin: 0;">Based in Cavite, Philippines.</p>
 	</header>
@@ -95,12 +123,47 @@ const work = [
 					<h3 class="serif" style="margin: 0; font-size: 28px; line-height: 1.2;">
 						{p.title}
 					</h3>
+					{p.mantra && (
+						<p class="serif" style="margin: 0; font-size: 22px; font-style: italic; color: var(--accent);">
+							{p.mantra}
+						</p>
+					)}
 					<p class="muted" style="margin: 0;">
 						{p.body}
 					</p>
+					{p.prompt && (
+						<div class="prompt">
+							<span class="label">Example prompt</span>
+							<p>{p.prompt}</p>
+							{p.result && <a href={p.result.href}>{p.result.label} →</a>}
+						</div>
+					)}
+					{p.refs && (
+						<p class="faint" style="margin: 0; display: flex; flex-wrap: wrap; gap: 4px 16px;">
+							{p.refs.map((r) => (
+								<a href={r.href}>{r.label}</a>
+							))}
+						</p>
+					)}
 				</div>
 			))
 		}
+	</section>
+
+	<section id="lab" style="display: flex; flex-direction: column; gap: 16px;">
+		<h2 class="label">From the Lab</h2>
+		<p class="muted" style="margin: 0; font-size: 16px;">
+			The workflows and tools I'm driving, testing and have moved on from.
+		</p>
+		{
+			board.map((status) => (
+				<div class="entry" style="justify-content: flex-start;">
+					<span class="chip" style="min-width: 92px; text-align: center;">{status}</span>
+					<span>{lab.filter((i) => i.status === status).map((i) => i.name).join(' · ')}</span>
+				</div>
+			))
+		}
+		<a href="/lab/" class="faint">Open the Lab →</a>
 	</section>
 
 	<section id="log" style="display: flex; flex-direction: column; gap: 16px;">

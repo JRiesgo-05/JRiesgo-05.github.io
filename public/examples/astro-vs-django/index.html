@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Astro collections, explained with Django</title>
+<meta name="description" content="Astro content collections mapped onto Django models and templates, drawn as a pipeline, a data view and a timeline.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Visual-first explainer: pipeline map, data view, request timeline, failure cards. */
+:root {
+	--bg: #fcfcfa; --fg: #22262a; --muted: #59605c; --faint: #6c7570; --rule: #e4e8e3; --panel: #f1f3ef;
+	--accent: #4f6f5a; --dj: #0c6b4f; --dj-soft: #dcefe6; --as: #3b5bb5; --as-soft: #e1e8fa; --warn: #a3471f; --warn-soft: #f8e4da;
+	--serif: 'Instrument Serif', Georgia, serif; --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+	--mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #161917; --fg: #e6e9e6; --muted: #b3bab5; --faint: #8f9892; --rule: #2c322e; --panel: #1f2420;
+		--accent: #9fc1a9; --dj: #7fd1b0; --dj-soft: #173328; --as: #9bb2f0; --as-soft: #1c2640; --warn: #f0a07a; --warn-soft: #3a2218;
+		color-scheme: dark;
+	}
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 880px; margin: 0 auto; padding: 48px 16px 72px; display: flex; flex-direction: column; gap: 64px; }
+a { color: var(--fg); text-decoration-color: var(--accent); text-underline-offset: 4px; }
+h1, h2 { font-family: var(--serif); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; }
+h2 { font-size: clamp(26px, 4vw, 32px); line-height: 1.15; }
+.label { font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin: 0; }
+.sub { margin: 0; color: var(--muted); max-width: 62ch; }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+section { display: flex; flex-direction: column; gap: 20px; }
+.dj { color: var(--dj); } .as { color: var(--as); }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
+.tag::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+
+/* Header */
+.top { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: end; }
+.prompt { background: var(--panel); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.prompt p { margin: 0; }
+.tldr { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; }
+.tldr p { margin: 0; }
+
+/* 1. Pipeline */
+.pipe { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); row-gap: 0; }
+.pipe .head { padding-bottom: 10px; }
+.step { border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; border: 1.5px solid transparent; cursor: pointer; text-align: left; font: inherit; color: inherit; transition: transform .15s ease, border-color .15s ease; }
+.step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.step.djs { background: var(--dj-soft); }
+.step.ass { background: var(--as-soft); }
+.step .k { font-size: 12px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.step code { font-size: 12.5px; overflow-wrap: anywhere; }
+.step .w { font-size: 14px; color: var(--muted); }
+.link { display: flex; align-items: center; justify-content: center; }
+.link svg { width: 44px; height: 100%; min-height: 40px; overflow: visible; }
+.link line { stroke: var(--faint); stroke-width: 1.5; stroke-dasharray: 3 4; }
+.down { grid-column: span 1; display: flex; justify-content: center; height: 22px; }
+.down svg { width: 12px; height: 22px; }
+.down path { stroke: var(--faint); stroke-width: 1.5; fill: none; }
+.pair-on .step { border-color: var(--fg); transform: translateY(-1px); }
+.pair-on .link line { stroke: var(--fg); stroke-dasharray: none; }
+.row-wrap { display: contents; }
+.step.breaks.djs, .step.breaks.ass { background: var(--warn-soft); }
+.step.breaks .k { color: var(--warn); }
+.note { min-height: 72px; background: var(--panel); border-radius: 6px; padding: 14px 16px; font-size: 15px; display: flex; gap: 12px; align-items: flex-start; }
+.note b { font-weight: 500; }
+
+/* 2. Data view */
+.data { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.panel { border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; background: var(--panel); font-size: 13px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th, .tbl td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--rule); }
+.tbl th { font-weight: 500; color: var(--faint); font-size: 12px; }
+.tbl td { font-family: var(--mono); font-size: 12px; }
+.files { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+.file { border: 1px solid var(--rule); border-radius: 4px; background: var(--bg); position: relative; }
+.file .fn { font-family: var(--mono); font-size: 12px; padding: 6px 10px; border-bottom: 1px solid var(--rule); color: var(--as); display: flex; align-items: center; gap: 6px; }
+.file pre { margin: 0; padding: 8px 10px; font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--muted); white-space: pre-wrap; }
+.hl { outline: 2px solid var(--fg); outline-offset: -2px; }
+.gone { opacity: .25; text-decoration: line-through; }
+.file.gone { text-decoration: none; }
+.toggle { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 15px; user-select: none; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+.querybar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.qb { font-family: var(--mono); font-size: 12.5px; padding: 10px 12px; border-radius: 6px; overflow-x: auto; white-space: nowrap; }
+.qb.dj { background: var(--dj-soft); } .qb.as { background: var(--as-soft); }
+
+/* 3. Timeline */
+.ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.ctrl input[type=range] { flex: 1 1 220px; accent-color: var(--accent); }
+.big { font-family: var(--serif); font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+.lanes { display: flex; flex-direction: column; gap: 14px; }
+.lane { display: grid; grid-template-columns: 110px minmax(0, 1fr) 120px; gap: 12px; align-items: center; }
+.lane svg { width: 100%; height: 44px; display: block; }
+.lane .count { text-align: right; font-size: 14px; color: var(--muted); }
+.lane .count b { display: block; font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1.1; color: var(--fg); font-variant-numeric: tabular-nums; }
+.axis { display: grid; grid-template-columns: 110px minmax(0, 1fr) 120px; gap: 12px; font-size: 12px; color: var(--faint); }
+.axis div { display: flex; justify-content: space-between; }
+
+/* 4. Breaks */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.card { border-radius: 6px; background: var(--warn-soft); padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.card svg { width: 100%; height: 86px; }
+.card h3 { margin: 0; font-size: 17px; font-weight: 500; }
+.card p { margin: 0; font-size: 15px; color: var(--muted); }
+.ic-stroke { stroke: var(--warn); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.ic-fill { fill: var(--warn); }
+.ic-soft { fill: var(--bg); stroke: var(--warn); stroke-width: 1.5; }
+.ic-text { fill: var(--warn); font-family: var(--mono); font-size: 11px; }
+
+footer { font-size: 14px; color: var(--faint); display: flex; flex-wrap: wrap; gap: 16px; border-top: 1px solid var(--rule); padding-top: 16px; }
+
+@media (max-width: 680px) {
+	.top, .data, .querybar, .cards { grid-template-columns: minmax(0, 1fr); }
+	.pipe { grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); }
+	.link svg { width: 20px; }
+	.step { padding: 10px; }
+	.step .w { display: none; }
+	.lane, .axis { grid-template-columns: 70px minmax(0, 1fr) 76px; gap: 8px; }
+	.lane .count b { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display: flex; flex-direction: column; gap: 24px;">
+	<a href="/" class="label" style="text-decoration: none;">← Jerimiah Riesgo</a>
+	<div class="top">
+		<div style="display: flex; flex-direction: column; gap: 16px;">
+			<h1>Astro content collections, explained with <span class="dj">Django</span></h1>
+			<div class="prompt">
+				<span class="label">The prompt</span>
+				<p>Explain Astro's content collections in terms of Django models and templates, as a one-page HTML artifact. Keep the text under five sentences, and show where the comparison breaks.</p>
+			</div>
+		</div>
+		<div class="tldr">
+			<span class="label">In five sentences</span>
+			<p>A collection is a Django model: its schema declares the fields.</p>
+			<p>Each Markdown file is a row; its frontmatter holds the values.</p>
+			<p><code>getCollection()</code> is <code>objects.all()</code>, and its callback is <code>.filter()</code>.</p>
+			<p>An <code>.astro</code> page is a view and a template in one file.</p>
+			<p>It breaks at <em>time</em>: Django works per request, Astro once at build.</p>
+		</div>
+	</div>
+</header>
+
+<section aria-labelledby="s1">
+	<span class="label">1 · The map</span>
+	<h2 id="s1">Same pipeline, different parts</h2>
+	<p class="sub">Read each column top to bottom. Dashed lines join the parts that do the same job. Click any step to see how they line up.</p>
+	<div class="pipe" id="pipe">
+		<div class="head"><span class="tag dj">Django</span></div><div></div><div class="head"><span class="tag as">Astro</span></div>
+	</div>
+	<div class="note" id="note" aria-live="polite"><span class="label" style="padding-top: 2px;">Step</span><span id="noteText">Click a step above.</span></div>
+</section>
+
+<section aria-labelledby="s2">
+	<span class="label">2 · The data</span>
+	<h2 id="s2">One table, or a folder of files</h2>
+	<p class="sub">The same three posts, stored two ways. Hover a row to find its file, then hide the drafts and watch both sides apply the same filter.</p>
+	<label class="toggle"><input type="checkbox" id="draftToggle"> Hide drafts</label>
+	<div class="data">
+		<div class="panel">
+			<div class="ph"><span class="tag dj">Database table: log</span><span class="faint mono" id="djCount">3 rows</span></div>
+			<table class="tbl" id="tbl">
+				<thead><tr><th>id</th><th>title</th><th>pub_date</th><th>draft</th></tr></thead>
+				<tbody></tbody>
+			</table>
+		</div>
+		<div class="panel">
+			<div class="ph"><span class="tag as">src/content/log/</span><span class="faint mono" id="asCount">3 files</span></div>
+			<div class="files" id="files"></div>
+		</div>
+	</div>
+	<div class="querybar">
+		<div class="qb dj" id="djq">Log.objects.all()</div>
+		<div class="qb as" id="asq">getCollection('log')</div>
+	</div>
+</section>
+
+<section aria-labelledby="s3">
+	<span class="label">3 · Where it breaks</span>
+	<h2 id="s3">When the work happens</h2>
+	<p class="sub">Drag the slider to add visitors. Django runs your code for every one of them. Astro ran it once, before anyone arrived.</p>
+	<div class="ctrl">
+		<label for="visitors" class="label">Visitors</label>
+		<input type="range" id="visitors" min="0" max="4" step="1" value="1">
+		<span class="big" id="vcount">10</span>
+	</div>
+	<div class="lanes">
+		<div class="lane"><span class="tag dj">Django</span><svg id="djLane" viewBox="0 0 600 44" preserveAspectRatio="none" role="img" aria-label="Django timeline"></svg><span class="count"><b id="djN">10</b>queries</span></div>
+		<div class="lane"><span class="tag as">Astro</span><svg id="asLane" viewBox="0 0 600 44" preserveAspectRatio="none" role="img" aria-label="Astro timeline"></svg><span class="count"><b id="asN">1</b>build</span></div>
+		<div class="axis"><span></span><div><span>build</span><span>time →</span></div><span></span></div>
+	</div>
+</section>
+
+<section aria-labelledby="s4">
+	<span class="label">4 · What that costs you</span>
+	<h2 id="s4">Three things Django has that Astro doesn't</h2>
+	<div class="cards">
+		<div class="card">
+			<svg viewBox="0 0 200 86" aria-hidden="true">
+				<rect class="ic-soft" x="40" y="14" width="64" height="58" rx="4"/>
+				<line class="ic-stroke" x1="52" y1="32" x2="92" y2="32"/><line class="ic-stroke" x1="52" y1="44" x2="84" y2="44"/><line class="ic-stroke" x1="52" y1="56" x2="88" y2="56"/>
+				<path class="ic-stroke" d="M128 62 L150 24 L160 30 L138 68 Z"/>
+				<line class="ic-stroke" x1="118" y1="16" x2="172" y2="74"/>
+			</svg>
+			<h3>No writes</h3>
+			<p>There's no <code>.save()</code>. To add a post, you add a file and rebuild.</p>
+		</div>
+		<div class="card">
+			<svg viewBox="0 0 200 86" aria-hidden="true">
+				<rect class="ic-soft" x="20" y="18" width="56" height="50" rx="4"/>
+				<text class="ic-text" x="28" y="38">title</text><text class="ic-text" x="28" y="54">date</text>
+				<path class="ic-stroke" d="M86 43 H112 M104 35 L112 43 L104 51"/>
+				<rect class="ic-soft" x="124" y="18" width="56" height="50" rx="4"/>
+				<text class="ic-text" x="132" y="38">title</text><text class="ic-text" x="132" y="54">date</text><text class="ic-text" x="132" y="66" style="font-weight: 700;">+tags</text>
+			</svg>
+			<h3>No migrations or admin</h3>
+			<p>Change the schema and every existing file has to match it by hand.</p>
+		</div>
+		<div class="card">
+			<svg viewBox="0 0 200 86" aria-hidden="true">
+				<rect class="ic-soft" x="22" y="26" width="34" height="40" rx="3"/><rect class="ic-soft" x="64" y="26" width="34" height="40" rx="3"/>
+				<rect x="106" y="26" width="34" height="40" rx="3" class="ic-fill"/>
+				<text x="113" y="51" style="fill: var(--bg); font-family: var(--mono); font-size: 12px;">!!</text>
+				<path class="ic-stroke" d="M150 46 H170"/><circle cx="182" cy="46" r="10" class="ic-soft"/>
+				<path class="ic-stroke" d="M177 41 L187 51 M187 41 L177 51"/>
+			</svg>
+			<h3>One bad file stops the deploy</h3>
+			<p>Validation runs at build, not on save. A typo in one post fails the whole site, which is annoying and also the point.</p>
+		</div>
+	</div>
+</section>
+
+<footer>
+	<span>Made with Claude Code from the prompt at the top.</span>
+	<a href="/#principles">Back to principles</a>
+</footer>
+</div>
+
+<script>
+(() => {
+	const NS = 'http://www.w3.org/2000/svg';
+
+	// 1. Pipeline map
+	const steps = [
+		{ k: 'Schema', dj: ['class Log(models.Model)', 'models.py'], as: ['defineCollection({ schema })', 'content.config.ts'],
+		  note: 'Both declare the fields once: title, date, draft. Django turns them into columns; Astro checks every file against them.' },
+		{ k: 'Data', dj: ['one row per post', 'in the database'], as: ['one .md file per post', 'in src/content/log/'],
+		  note: 'A Django row and an Astro file hold the same thing. The difference: you edit a file in your editor, not through a form or the admin.' },
+		{ k: 'Query', dj: ['Log.objects.filter(draft=False)', 'runs SQL'], as: ["getCollection('log', e => !e.data.draft)", 'runs plain JavaScript'],
+		  note: 'Same question, two engines. Django asks the database; Astro loads every file into memory and filters the array.' },
+		{ k: 'Route', dj: ['urls.py + DetailView', 'two files'], as: ['[...slug].astro + getStaticPaths', 'one file'],
+		  note: 'Django maps a URL pattern to a view. Astro lists every URL up front with getStaticPaths and makes one page for each.' },
+		{ k: 'Render', dj: ['{{ log.body|linebreaks }}', 'in a template'], as: ['render(entry) → <Content />', 'in the same .astro file'],
+		  note: 'An .astro file is the view and the template together: the code fence at the top is the view, the markup below is the template.' },
+		{ k: 'Output', dj: ['HTML on every request', 'server stays running'], as: ['HTML once, at build', 'just files on GitHub Pages'], breaks: true,
+		  note: 'This is where the analogy breaks. Django does all of the above for each visitor. Astro did it once when you pushed, and visitors only download files.' },
+	];
+	const pipe = document.getElementById('pipe');
+	const noteText = document.getElementById('noteText');
+	const arrow = () => {
+		const d = document.createElement('div'); d.className = 'down';
+		d.innerHTML = '<svg viewBox="0 0 12 22" aria-hidden="true"><path d="M6 0 V20 M1 15 L6 20 L11 15"/></svg>';
+		return d;
+	};
+	const groups = [];
+	steps.forEach((s, i) => {
+		const g = document.createElement('div'); g.className = 'row-wrap';
+		const mk = (side) => {
+			const b = document.createElement('button');
+			b.type = 'button';
+			b.className = 'step ' + (side === 'dj' ? 'djs' : 'ass') + (s.breaks ? ' breaks' : '');
+			b.innerHTML = '<span class="k">' + s.k + '</span><code></code><span class="w"></span>';
+			b.querySelector('code').textContent = s[side][0];
+			b.querySelector('.w').textContent = s[side][1];
+			b.addEventListener('click', () => select(i));
+			return b;
+		};
+		const link = document.createElement('div'); link.className = 'link';
+		link.innerHTML = '<svg viewBox="0 0 44 10" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="5" x2="44" y2="5"/></svg>';
+		g.append(mk('dj'), link, mk('as'));
+		pipe.append(g);
+		groups.push(g);
+		if (i < steps.length - 1) { pipe.append(arrow(), document.createElement('div'), arrow()); }
+	});
+	function select(i) {
+		groups.forEach((g, j) => g.classList.toggle('pair-on', i === j));
+		noteText.innerHTML = '<b>' + steps[i].k + '.</b> ' + steps[i].note;
+	}
+	select(5);
+
+	// 2. Data view
+	const posts = [
+		{ id: 1, slug: 'why-this-log', title: 'Why I keep this log', date: '2026-10-28', draft: false },
+		{ id: 2, slug: 'working-with-ai', title: 'Working with AI, part 1', date: '2026-10-28', draft: true },
+		{ id: 3, slug: 'astro-by-analogy', title: 'Astro by analogy', date: '2026-10-29', draft: false },
+	];
+	const tbody = document.querySelector('#tbl tbody');
+	const files = document.getElementById('files');
+	const pairs = posts.map((p) => {
+		const tr = document.createElement('tr');
+		[p.id, p.title, p.date, p.draft ? 'True' : 'False'].forEach((v) => { const td = document.createElement('td'); td.textContent = v; tr.append(td); });
+		tbody.append(tr);
+		const f = document.createElement('div'); f.className = 'file';
+		f.innerHTML = '<div class="fn"></div><pre></pre>';
+		f.querySelector('.fn').textContent = p.slug + '.md';
+		f.querySelector('pre').textContent = "---\ntitle: '" + p.title + "'\npubDate: " + p.date + '\ndraft: ' + p.draft + '\n---';
+		files.append(f);
+		const on = (v) => { tr.classList.toggle('hl', v); f.classList.toggle('hl', v); };
+		[tr, f].forEach((el) => { el.addEventListener('mouseenter', () => on(true)); el.addEventListener('mouseleave', () => on(false)); });
+		return { p, tr, f };
+	});
+	const toggle = document.getElementById('draftToggle');
+	function applyFilter() {
+		const hide = toggle.checked;
+		pairs.forEach(({ p, tr, f }) => { const g = hide && p.draft; tr.classList.toggle('gone', g); f.classList.toggle('gone', g); });
+		const n = hide ? posts.filter((p) => !p.draft).length : posts.length;
+		document.getElementById('djCount').textContent = n + ' rows';
+		document.getElementById('asCount').textContent = n + ' files';
+		document.getElementById('djq').textContent = hide ? 'Log.objects.filter(draft=False)' : 'Log.objects.all()';
+		document.getElementById('asq').textContent = hide ? "getCollection('log', ({ data }) => !data.draft)" : "getCollection('log')";
+	}
+	toggle.addEventListener('change', applyFilter);
+	applyFilter();
+
+	// 3. Timeline
+	const counts = [1, 10, 100, 1000, 10000];
+	const djLane = document.getElementById('djLane');
+	const asLane = document.getElementById('asLane');
+	const el = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+	const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+	function drawLanes(n) {
+		djLane.replaceChildren(); asLane.replaceChildren();
+		const shown = Math.min(n, 60);
+		const x0 = 70, x1 = 590;
+		[djLane, asLane].forEach((s) => s.append(el('line', { x1: 0, y1: 22, x2: 600, y2: 22, stroke: css('--rule'), 'stroke-width': 2 })));
+		// Astro: one build block at the start
+		asLane.append(el('rect', { x: 4, y: 8, width: 52, height: 28, rx: 4, fill: css('--as') }));
+		for (let i = 0; i < shown; i++) {
+			const x = shown === 1 ? (x0 + x1) / 2 : x0 + (i * (x1 - x0)) / (shown - 1);
+			djLane.append(el('rect', { x: x - 2.5, y: 8, width: 5, height: 28, rx: 2, fill: css('--dj') }));
+			asLane.append(el('circle', { cx: x, cy: 22, r: 2.5, fill: css('--faint') }));
+		}
+		if (n > shown) {
+			const t = el('text', { x: 596, y: 6, 'text-anchor': 'end', 'font-size': 11, fill: css('--faint'), 'font-family': 'monospace' });
+			t.textContent = 'showing 60 of ' + n.toLocaleString();
+			djLane.append(t);
+		}
+	}
+	const slider = document.getElementById('visitors');
+	function update() {
+		const n = counts[+slider.value];
+		document.getElementById('vcount').textContent = n.toLocaleString();
+		document.getElementById('djN').textContent = n.toLocaleString();
+		document.getElementById('asN').textContent = '1';
+		drawLanes(n);
+	}
+	slider.addEventListener('input', update);
+	matchMedia('(prefers-color-scheme: dark)').addEventListener('change', update);
+	update();
+})();
+</script>
+</body>
+</html>
