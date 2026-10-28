@@ -1,0 +1,26 @@
+---
+import { getCollection } from 'astro:content';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Base from '../../layouts/Base.astro';
+import { SITE_TITLE } from '../../consts';
+
+const posts = (await getCollection('log', ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<Base title={`Log · ${SITE_TITLE}`} description="Everything I've written down so far.">
+	<section style="display: flex; flex-direction: column; gap: 16px;">
+		<h1 class="serif" style="margin: 0 0 16px; font-size: 48px; line-height: 1.1;">Log</h1>
+		{
+			posts.map((post) => (
+				<a class="entry" href={`/log/${post.id}/`}>
+					<span>{post.data.title}</span>
+					<span class="faint">
+						<FormattedDate date={post.data.pubDate} />
+					</span>
+				</a>
+			))
+		}
+	</section>
+</Base>

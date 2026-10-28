@@ -1,0 +1,168 @@
+/* Quiet minimal: one narrow column, serif headings, sage accent. */
+
+:root {
+	--bg: #fcfcfa;
+	--fg: #22262a;
+	--muted: #59605c;
+	--faint: #6c7570;
+	--rule: #e4e8e3;
+	--accent: #4f6f5a;
+	--underline: #a9bfae;
+	--code-bg: #f1f3ef;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #161917;
+		--fg: #e6e9e6;
+		--muted: #b3bab5;
+		--faint: #8f9892;
+		--rule: #2c322e;
+		--accent: #9fc1a9;
+		--underline: #4f6f5a;
+		--code-bg: #1f2420;
+		color-scheme: dark;
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family: var(--font-sans);
+	font-size: 17px;
+	line-height: 1.7;
+}
+
+.wrap {
+	max-width: 640px;
+	margin: 0 auto;
+	padding: 72px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 72px;
+}
+
+a {
+	color: var(--fg);
+	text-decoration-color: var(--underline);
+	text-underline-offset: 4px;
+}
+
+a:hover {
+	color: var(--accent);
+}
+
+a:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+}
+
+h1,
+h2,
+h3 {
+	text-wrap: balance;
+}
+
+.serif {
+	font-family: var(--font-serif);
+	font-weight: 400;
+}
+
+.label {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	color: var(--faint);
+}
+
+.muted {
+	color: var(--muted);
+}
+
+.faint {
+	color: var(--faint);
+	font-size: 15px;
+}
+
+.entry {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 4px 16px;
+}
+
+/* Post body */
+.prose {
+	min-width: 0;
+}
+
+.prose h2,
+.prose h3 {
+	font-family: var(--font-serif);
+	font-weight: 400;
+	line-height: 1.2;
+	margin: 2em 0 0.4em;
+}
+
+.prose h2 {
+	font-size: 30px;
+}
+
+.prose h3 {
+	font-size: 24px;
+}
+
+.prose blockquote {
+	margin: 1.5em 0;
+	padding-left: 20px;
+	border-left: 2px solid var(--underline);
+	color: var(--muted);
+	font-family: var(--font-serif);
+	font-size: 22px;
+}
+
+.prose code {
+	font-size: 0.9em;
+	background: var(--code-bg);
+	padding: 2px 5px;
+	border-radius: 3px;
+}
+
+.prose pre {
+	overflow-x: auto;
+	padding: 16px;
+	border-radius: 4px;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.prose pre code {
+	background: none;
+	padding: 0;
+}
+
+.prose img {
+	max-width: 100%;
+	height: auto;
+}
+
+.prose hr {
+	border: 0;
+	border-top: 1px solid var(--rule);
+	margin: 2em 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		transition: none !important;
+	}
+}
