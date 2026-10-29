@@ -54,6 +54,6 @@ You don't need a skill or a template for this. It's one extra sentence in the pr
 
 ## The real reason
 
-I'm bad at describing what I want and good at recognizing it. Asking for ten turns explaining into choosing, and choosing is the part I'm good at.
+I can describe what I want, but only with the words I already have. Asking for ten gives me new ones: a waterfall, a what-if simulator, a five whys. Next time I can ask for them by name.
 
 I hope it gets you past the first chart.
