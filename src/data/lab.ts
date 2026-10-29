@@ -21,6 +21,13 @@ export const lab: LabItem[] = [
 		body: 'Short prompts, rich context going in, and an HTML page or diagram coming back. Skills stay a few lines each.',
 	},
 	{
+		name: 'Ask for ten, keep one',
+		status: 'Driving',
+		by: 'My own habit, written up in the log',
+		href: '/log/ask-for-ten-keep-one/',
+		body: 'When I explain something to other people, I ask for ten ways in one artifact, same facts in each, and keep the two or three that land for that audience.',
+	},
+	{
 		name: 'Test-driven development',
 		status: 'Testing',
 		by: "Matt Pocock's skills",
@@ -54,5 +61,10 @@ export const examples = [
 		title: 'Astro content collections, explained with Django',
 		href: '/examples/astro-vs-django/',
 		body: 'A clickable pipeline, a live data view and a timeline, from one short prompt.',
+	},
+	{
+		title: 'One slowdown, ten ways to explain it',
+		href: '/examples/ask-for-ten/',
+		body: 'An analogy, a simulator, a code walk and seven more, from one prompt.',
 	},
 ];
