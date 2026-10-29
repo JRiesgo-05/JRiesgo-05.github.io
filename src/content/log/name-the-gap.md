@@ -12,6 +12,8 @@ But I can't spec what I haven't seen. When Claude set up search for this site, I
 
 So I stopped polishing the first prompt. I send a short one, look at what comes back, and say what's missing.
 
+This is my style, not a rule. Some people think best by writing the spec first, and a good one up front will serve them better than three rounds of reacting. If you're more like me, and you only know what you want once you see it, this might fit you too.
+
 ## Name the gap, not the fix
 
 Three prompts got me from a reference page to something I actually understood. Here they are, typos and all:
