@@ -2,12 +2,31 @@
 
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
+import { existsSync } from 'node:fs';
 import { defineConfig, fontProviders } from 'astro/config';
+
+// GitHub Pages serves public/examples/<name>/index.html at /examples/<name>/.
+// The dev server doesn't, so rewrite folder URLs to their index.html.
+/** @type {import('vite').Plugin} */
+const publicFolderIndex = {
+	name: 'public-folder-index',
+	enforce: 'pre',
+	configureServer(server) {
+		server.middlewares.use((req, _res, next) => {
+			const path = req.url?.split('?')[0];
+			if (path?.startsWith('/examples/') && path.endsWith('/') && existsSync(`public${path}index.html`)) {
+				req.url = `${path}index.html`;
+			}
+			next();
+		});
+	},
+};
 
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://jriesgo-05.github.io',
 	integrations: [mdx(), sitemap()],
+	vite: { plugins: [publicFolderIndex] },
 	fonts: [
 		{
 			provider: fontProviders.google(),

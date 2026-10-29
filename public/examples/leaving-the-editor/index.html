@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leaving the editor</title>
+<meta name="description" content="One small FastAPI fix, replayed at each of four steps from Copilot autocomplete to Claude Code desktop: what I typed, what the AI did and which windows I touched.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* One fix, four steps: my actions on the left, a mock of the screen on the right. */
+:root {
+	--bg: #fcfcfa; --fg: #22262a; --muted: #59605c; --faint: #6c7570; --rule: #e4e8e3; --panel: #f1f3ef; --code: #f4f5f2;
+	--accent: #4f6f5a; --accent-soft: #e3ece5; --warn: #b4532a; --warn-soft: #f6e6dc; --add: #e3efe4; --ghost: #9aa39d;
+	--serif: 'Instrument Serif', Georgia, serif; --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+	--mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #161917; --fg: #e6e9e6; --muted: #b3bab5; --faint: #8f9892; --rule: #2c322e; --panel: #1f2420; --code: #111412;
+		--accent: #9fc1a9; --accent-soft: #233029; --warn: #e99572; --warn-soft: #3a261d; --add: #1d2c22; --ghost: #5d6661;
+		color-scheme: dark;
+	}
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 48px 16px 72px; display: flex; flex-direction: column; gap: 40px; }
+h1, h2 { font-family: var(--serif); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; }
+h2 { font-size: clamp(24px, 4vw, 30px); line-height: 1.15; }
+p { margin: 0; }
+a { color: var(--fg); text-decoration-color: var(--accent); text-underline-offset: 4px; }
+code { font-family: var(--mono); font-size: .85em; }
+.label { font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+.sub { color: var(--muted); max-width: 64ch; }
+.note { font-size: 13px; color: var(--faint); }
+header { display: flex; flex-direction: column; gap: 18px; }
+
+/* The task */
+.task { border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+.task p { font-size: 15px; color: var(--muted); }
+
+/* Step tabs */
+.tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.tabs button { font: inherit; text-align: left; background: none; color: var(--fg); border: 1px solid var(--rule); border-radius: 8px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.tabs button:hover { border-color: var(--accent); }
+.tabs button[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.tabs .n { font-family: var(--serif); font-style: italic; color: var(--accent); font-size: 18px; }
+.tabs .t { font-size: 14px; }
+.tabs .w { font-size: 12px; color: var(--faint); }
+@media (max-width: 640px) { .tabs { grid-template-columns: 1fr 1fr; } }
+
+/* A step */
+.step { display: none; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.step.on { display: grid; }
+@media (max-width: 800px) { .step.on { grid-template-columns: 1fr; } }
+.side { display: flex; flex-direction: column; gap: 18px; }
+ol.did { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+ol.did li::marker { color: var(--faint); font-size: 13px; }
+ol.did .me { color: var(--warn); }
+.count { display: flex; gap: 16px; }
+.count div { display: flex; flex-direction: column; }
+.count b { font-family: var(--serif); font-weight: 400; font-size: 34px; line-height: 1; }
+.count span { font-size: 12px; color: var(--faint); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; border: 1px solid var(--rule); border-radius: 4px; padding: 2px 8px; color: var(--muted); }
+.shift { font-size: 15px; background: var(--panel); border-radius: 6px; padding: 14px 16px; }
+
+/* Mock screen */
+.screen { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--bg); min-width: 0; }
+.screen .chrome { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--rule); font-size: 12px; color: var(--faint); }
+.screen .chrome b { color: var(--fg); font-weight: 600; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.split > * + * { border-left: 1px solid var(--rule); }
+@media (max-width: 640px) { .split { grid-template-columns: 1fr; } .split > * + * { border-left: 0; border-top: 1px solid var(--rule); } }
+.pane-h { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding: 8px 12px 0; }
+pre { margin: 0; padding: 10px 12px 14px; font-family: var(--mono); font-size: 12px; line-height: 1.6; overflow-x: auto; background: var(--code); }
+pre .ghost { color: var(--ghost); font-style: italic; }
+pre .add { background: var(--add); display: block; }
+pre .c { color: var(--faint); }
+pre .bad { color: var(--warn); }
+pre .ok { color: var(--accent); }
+.chat { padding: 12px; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.msg { border-radius: 6px; padding: 8px 12px; }
+.msg.user { background: var(--warn-soft); align-self: flex-end; max-width: 90%; }
+.msg.ai { background: var(--panel); }
+.tool { font-family: var(--mono); font-size: 12px; color: var(--muted); border-left: 2px solid var(--accent); padding: 2px 10px; }
+.tool .ok { color: var(--accent); }
+.tool .bad { color: var(--warn); }
+.browser { padding: 12px; font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
+.browser .url { font-family: var(--mono); font-size: 11px; color: var(--faint); background: var(--code); border-radius: 4px; padding: 4px 8px; }
+.browser .page { border: 1px solid var(--rule); border-radius: 6px; padding: 10px; }
+.browser .page b { font-family: var(--serif); font-weight: 400; font-size: 18px; display: block; }
+.browser .page.err b { color: var(--warn); }
+
+/* Step 3 vs step 4: what an explainer comes back as */
+.compare { display: none; }
+.compare.on { display: flex;flex-direction: column; gap: 18px; border-top: 1px solid var(--rule); padding-top: 32px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+.col { border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.col.win { border-color: var(--accent); }
+.col h3 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 0; }
+.flow { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.flow li { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.flow li + li::before { content: '↓'; color: var(--faint); font-size: 12px; }
+.flow .box { font-family: var(--mono); font-size: 12px; background: var(--code); border-radius: 4px; padding: 6px 10px; color: var(--muted); overflow-wrap: anywhere; }
+.flow .me { color: var(--warn); }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; margin: 0; border-top: 1px solid var(--rule); padding-top: 12px; }
+.facts dt { color: var(--faint); }
+.facts dd { margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<header>
+		<p class="label">Example · Leaving the editor</p>
+		<h1>One fix, four ways</h1>
+		<p class="sub">The same small bug in a FastAPI app, done at each step from Copilot autocomplete to Claude Code desktop. Watch what I type, what the AI does and how many windows I touch.</p>
+	</header>
+
+	<div class="task">
+		<p class="label">The bug</p>
+		<p>A FastAPI app keeps HTML reports in <code>reports/&lt;name&gt;/index.html</code>. On the server, nginx serves them at <code>/reports/&lt;name&gt;/</code>. Locally, <code>uvicorn app.main:app --reload</code> returns 404 for the same URL, so I can't check a report before I ship it.</p>
+	</div>
+
+	<div class="tabs" role="tablist" id="tabs">
+		<button role="tab" data-i="0"><span class="n">1</span><span class="t">Autocomplete</span><span class="w">Copilot</span></button>
+		<button role="tab" data-i="1"><span class="n">2</span><span class="t">Agent in the editor</span><span class="w">Copilot agent</span></button>
+		<button role="tab" data-i="2"><span class="n">3</span><span class="t">Claude Code in VS Code</span><span class="w">extension</span></button>
+		<button role="tab" data-i="3"><span class="n">4</span><span class="t">Claude Code desktop</span><span class="w">app</span></button>
+	</div>
+
+	<!-- Step 1 -->
+	<section class="step" data-i="0">
+		<div class="side">
+			<h2>I write it, Copilot finishes lines</h2>
+			<ol class="did">
+				<li class="me">Open the report in Chrome, see <code>{"detail":"Not Found"}</code></li>
+				<li class="me">Search "fastapi staticfiles index.html 404"</li>
+				<li class="me">Read the Starlette docs, find <code>html=True</code></li>
+				<li class="me">Edit the mount in <code>app/main.py</code>, Copilot fills the line</li>
+				<li class="me">Watch uvicorn reload in the VS Code terminal</li>
+				<li class="me">Back to Chrome, reload each report</li>
+			</ol>
+			<div class="count"><div><b>6</b><span>steps by me</span></div><div><b>4</b><span>windows</span></div></div>
+			<div class="chips"><span class="chip">Chrome</span><span class="chip">Google</span><span class="chip">Starlette docs</span><span class="chip">VS Code</span></div>
+			<p class="shift">Copilot saved keystrokes. Finding out <em>why</em> it broke was all me.</p>
+		</div>
+		<div class="screen">
+			<div class="chrome"><b>VS Code</b><span>app/main.py</span></div>
+			<pre><span class="c"># app/main.py</span>
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
+app = FastAPI()
+app.include_router(api.router, prefix="/api")
+
+app.mount("/reports", StaticFiles(directory="reports"<span class="ghost">, html=True), name="reports")</span></pre>
+			<p class="pane-h">Gray text is Copilot's suggestion. Tab to accept.</p>
+			<div style="height:10px"></div>
+		</div>
+	</section>
+
+	<!-- Step 2 -->
+	<section class="step" data-i="1">
+		<div class="side">
+			<h2>Copilot writes the change, I check it</h2>
+			<ol class="did">
+				<li class="me">Open the report in Chrome, see 404</li>
+				<li class="me">Describe the bug in Copilot chat</li>
+				<li>Copilot edits <code>app/main.py</code></li>
+				<li class="me">Read the diff in the editor, accept</li>
+				<li class="me">Back to Chrome, reload each report</li>
+			</ol>
+			<div class="count"><div><b>4</b><span>steps by me</span></div><div><b>2</b><span>windows</span></div></div>
+			<div class="chips"><span class="chip">Chrome</span><span class="chip">VS Code</span></div>
+			<p class="shift">No more searching. I still checked it by hand.</p>
+		</div>
+		<div class="screen">
+			<div class="chrome"><b>VS Code</b><span>Copilot chat · app/main.py</span></div>
+			<div class="split">
+				<div class="chat">
+					<div class="msg user">/reports/weekly-spend/ is 404 locally but works behind nginx. Fix it.</div>
+					<div class="msg ai"><code>StaticFiles</code> only serves <code>index.html</code> for a folder when <code>html=True</code>. nginx does that for you on the server.</div>
+				</div>
+				<pre>  app.mount(
+      "/reports",
+<span class="bad">-     StaticFiles(directory="reports"),</span><span class="add">+     StaticFiles(directory="reports", html=True),</span>      name="reports",
+  )</pre>
+			</div>
+		</div>
+	</section>
+
+	<!-- Step 3 -->
+	<section class="step" data-i="2">
+		<div class="side">
+			<h2>Claude does it, VS Code shows me</h2>
+			<ol class="did">
+				<li class="me">Ask Claude in the VS Code panel</li>
+				<li>Claude curls the reports, sees 404</li>
+				<li>Claude edits <code>app/main.py</code>, uvicorn reloads</li>
+				<li>Claude curls again, gets 200, runs <code>pytest</code></li>
+				<li class="me">Open the diff tab in VS Code to read it</li>
+				<li class="me">Switch to Chrome to look at a report myself</li>
+			</ol>
+			<div class="count"><div><b>3</b><span>steps by me</span></div><div><b>2</b><span>windows</span></div></div>
+			<div class="chips"><span class="chip">VS Code</span><span class="chip">Chrome</span></div>
+			<p class="shift">Claude ran and checked it. I only opened VS Code to <em>look</em>.</p>
+		</div>
+		<div class="screen">
+			<div class="chrome"><b>VS Code</b><span>Claude Code panel · diff tab</span></div>
+			<div class="split">
+				<div class="chat">
+					<div class="msg user">The report pages 404 on localhost. Make them work.</div>
+					<div class="tool">curl /reports/*/ <span class="bad">404 404 404 404</span></div>
+					<div class="tool">edit app/main.py <span class="ok">+1 -1</span></div>
+					<div class="tool">curl /reports/*/ <span class="ok">200 200 200 200</span></div>
+					<div class="tool">pytest -q <span class="ok">42 passed</span></div>
+				</div>
+				<div>
+					<p class="pane-h">Diff tab, opened by me</p>
+					<pre><span class="bad">- StaticFiles(directory="reports"),</span><span class="add">+ StaticFiles(directory="reports", html=True),</span></pre>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Step 4 -->
+	<section class="step" data-i="3">
+		<div class="side">
+			<h2>Everything in one window</h2>
+			<ol class="did">
+				<li class="me">Type one line</li>
+				<li>Claude curls the reports, sees 404</li>
+				<li>Claude reads <code>app/main.py</code>, adds <code>html=True</code></li>
+				<li>uvicorn reloads, Claude curls all four reports, gets 200</li>
+				<li>Claude runs <code>pytest</code></li>
+				<li>Claude opens a report in the browser pane and takes a screenshot</li>
+				<li class="me">Look at the report in the browser pane</li>
+			</ol>
+			<div class="count"><div><b>2</b><span>steps by me</span></div><div><b>1</b><span>window</span></div></div>
+			<div class="chips"><span class="chip">Claude Code desktop</span></div>
+			<p class="shift">The diff, the terminal and the browser sit next to the conversation. I never open VS Code.</p>
+		</div>
+		<div class="screen">
+			<div class="chrome"><b>Claude Code desktop</b><span>conversation · browser pane</span></div>
+			<div class="split">
+				<div class="chat">
+					<div class="msg user">the report pages 404 on localhost but work on the server, fix it and show me one</div>
+					<div class="tool">cat app/main.py</div>
+					<div class="tool">edit app/main.py <span class="ok">+1 -1</span></div>
+					<div class="tool">curl weekly-spend <span class="ok">200</span><br>curl campaign-pacing <span class="ok">200</span><br>curl budget-split <span class="ok">200</span><br>curl audience-reach <span class="ok">200</span></div>
+					<div class="tool">pytest -q <span class="ok">42 passed</span></div>
+					<div class="tool">browser: open /reports/weekly-spend/, screenshot</div>
+				</div>
+				<div class="browser">
+					<p class="pane-h" style="padding:0">Browser pane</p>
+					<span class="url">localhost:8000/reports/weekly-spend/</span>
+					<div class="page"><b>Weekly spend</b><span class="note">200 OK</span></div>
+					<p class="pane-h" style="padding:0">Before</p>
+					<div class="page err"><b>{"detail":"Not Found"}</b></div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="compare">
+		<p class="label">Step 3 vs step 4</p>
+		<h2>HTML files became artifacts</h2>
+		<p class="sub">Same prompt in both: "explain what you just changed and why, as a page I can read." What comes back is the biggest difference between Claude Code in VS Code and the desktop app.</p>
+		<div class="cols">
+			<div class="col">
+				<h3>Claude Code in VS Code</h3>
+				<ol class="flow">
+					<li>Claude writes a file<span class="box">explainer.html</span></li>
+					<li class="me">I find it in the file explorer and open it in Chrome<span class="box">file:///Users/me/reports-api/explainer.html</span></li>
+					<li class="me">Someone wants it, so I send them the file</li>
+					<li class="me">I change it, so I send the file again</li>
+				</ol>
+				<dl class="facts">
+					<dt>Lives in</dt><dd>my repo, as a file to clean up later</dd>
+					<dt>I read it in</dt><dd>Chrome, a separate window</dd>
+					<dt>To share</dt><dd>attach the file</dd>
+				</dl>
+			</div>
+			<div class="col">
+				<h3>Claude Code desktop</h3>
+				<ol class="flow">
+					<li>Claude publishes an artifact<span class="box">claude.ai/code/artifact/…</span></li>
+					<li>It opens next to the conversation, nothing to find</li>
+					<li class="me">Someone wants it, so I send the link</li>
+					<li>I ask for a change, and the same link updates</li>
+				</ol>
+				<dl class="facts">
+					<dt>Lives in</dt><dd>my artifacts, private until I share it</dd>
+					<dt>I read it in</dt><dd>the same window as the conversation</dd>
+					<dt>To share</dt><dd>send a link</dd>
+				</dl>
+			</div>
+		</div>
+	</section>
+
+	<p class="note">A replay: the same fix the way I'd have done it with each tool. The repo, reports and test count are made up.</p>
+	<p class="note"><a href="/log/leaving-the-editor/">Back to the log entry</a></p>
+</div>
+<script>
+const tabs = [...document.querySelectorAll('#tabs button')];
+const steps = [...document.querySelectorAll('.step')];
+const compare = document.querySelector('.compare');
+const cols = [...compare.querySelectorAll('.col')];
+function show(i) {
+	tabs.forEach((b, j) => b.setAttribute('aria-selected', String(i === j)));
+	steps.forEach((s, j) => s.classList.toggle('on', i === j));
+	// The HTML-vs-artifact comparison only belongs to steps 3 and 4.
+	compare.classList.toggle('on', i >= 2);
+	cols.forEach((c, j) => c.classList.toggle('win', i === j + 2));
+}
+tabs.forEach((b, i) => b.addEventListener('click', () => show(i)));
+show(3);
+</script>
+</body>
+</html>
