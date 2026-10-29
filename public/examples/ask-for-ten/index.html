@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ten ways to explain one slowdown</title>
+<meta name="description" content="One slow data job explained ten different ways from one prompt: analogy, timeline, simulator, code walk and more. The system and numbers are made up.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Ten tabs, same facts, each explained a different way. Numbers come from one small model in the script. */
+:root {
+	--bg: #fcfcfa; --fg: #22262a; --muted: #59605c; --faint: #6c7570; --rule: #e4e8e3; --panel: #f1f3ef;
+	--accent: #4f6f5a; --slow: #b4532a; --slow-soft: #f6e3d9; --fast: #3d7a55; --fast-soft: #dcefe2; --read: #3b5bb5; --other: #b9c0bb;
+	--serif: 'Instrument Serif', Georgia, serif; --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+	--mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #161917; --fg: #e6e9e6; --muted: #b3bab5; --faint: #8f9892; --rule: #2c322e; --panel: #1f2420;
+		--accent: #9fc1a9; --slow: #f0a07a; --slow-soft: #3a2218; --fast: #8fd0a6; --fast-soft: #1b3324; --read: #9bb2f0; --other: #4a524c;
+		color-scheme: dark;
+	}
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 880px; margin: 0 auto; padding: 48px 16px 72px; display: flex; flex-direction: column; gap: 40px; }
+h1, h2 { font-family: var(--serif); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; }
+h2 { font-size: clamp(26px, 4vw, 32px); line-height: 1.15; }
+p { margin: 0; }
+.label { font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin: 0; }
+.sub { color: var(--muted); max-width: 62ch; }
+.note { font-size: 13px; color: var(--faint); }
+.mono, code { font-family: var(--mono); font-size: 13px; }
+.slow { color: var(--slow); } .fast { color: var(--fast); }
+header { display: flex; flex-direction: column; gap: 18px; }
+.prompt { background: var(--panel); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.fix { background: var(--fast-soft); color: var(--fast); border-radius: 3px; padding: 0 4px; }
+
+/* Tabs */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button { font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--muted); cursor: pointer; }
+.tabs button[aria-selected="true"] { border-color: var(--accent); color: var(--fg); background: var(--panel); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.panel { border: 1px solid var(--rule); border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-height: 420px; }
+.panel[hidden] { display: none; }
+.how { font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.b { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--rule); background: transparent; color: var(--fg); cursor: pointer; }
+.b.on { border-color: var(--accent); background: var(--panel); }
+.big { font-family: var(--serif); font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 680px) { .shelves { grid-template-columns: repeat(25, minmax(0, 1fr)); } .grid2 { grid-template-columns: 1fr; } .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panel { padding: 18px; } }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: var(--sans); font-size: 12px; fill: var(--muted); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.lane { display: flex; height: 36px; border-radius: 4px; overflow: hidden; background: var(--panel); position: relative; }
+.lane i { display: block; height: 100%; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; background: var(--c); }
+
+/* 1 analogy */
+.shelves { display: grid; grid-template-columns: repeat(50, minmax(0, 1fr)); gap: 2px; }
+.shelves i { aspect-ratio: 1; border-radius: 1px; background: var(--rule); }
+.shelves i.today { background: var(--fast-soft); outline: 1px solid var(--fast); }
+.shelves i.walked { background: var(--slow); }
+.shelves i.today.walked { background: var(--fast); }
+/* 4 whys */
+.why { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-top: 1px solid var(--rule); }
+.why b { font-family: var(--serif); font-weight: 400; font-size: 26px; line-height: 1; color: var(--slow); }
+.why .q { font-weight: 500; }
+.why .fixtag { font-size: 13px; color: var(--fast); }
+/* 6 reveal */
+.reveal { border-radius: 6px; overflow: hidden; border: 1px solid var(--rule); }
+.reveal .layer { padding: 18px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+/* 9 code */
+.code { background: var(--panel); border-radius: 6px; padding: 10px 0; font-family: var(--mono); font-size: 13px; overflow-x: auto; }
+.code span { display: block; white-space: pre; padding: 1px 14px; border-left: 3px solid transparent; }
+.code span.cur { background: var(--slow-soft); border-left-color: var(--slow); }
+.code.after span.cur { background: var(--fast-soft); border-left-color: var(--fast); }
+/* 10 one page */
+.cell { border-top: 2px solid var(--rule); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.cell.s { border-color: var(--slow); } .cell.f { border-color: var(--fast); }
+.kept { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; display: flex; flex-direction: column; gap: 8px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+	<header>
+		<p class="label">Example · Ask for ten, keep one</p>
+		<h1>One slowdown, ten ways to explain it</h1>
+		<div class="prompt">
+			<p class="label">The prompt</p>
+			<p>Explain why this job got slow in ten different ways, as one artifact with a tab for each: an analogy, a timeline, a simulator, a code walkthrough and so on. <span class="fix">Use the same facts in every tab</span>, and make each one visual first.</p>
+		</div>
+		<p class="sub">The facts: a nightly job asks the warehouse three questions. Before answering each one, the warehouse lists <b>every</b> file in the bucket, about 600,000, when the job only needs today's 30,000. Two fixes: read only today's folder, and ask once instead of three times.</p>
+		<p class="note">The system, names and numbers here are made up. The shape of the problem and the ten ways are from the real page.</p>
+	</header>
+
+	<nav class="tabs" role="tablist" aria-label="Ways to explain" id="tabs"></nav>
+
+	<section class="panel" data-name="Analogy" role="tabpanel">
+		<span class="how">1 · Analogy</span>
+		<h2>The librarian who walks every shelf</h2>
+		<p class="sub">You ask for today's new books. The librarian walks past every shelf first, then hands you today's cart. Each square is a shelf of 1,000 files. Green is today.</p>
+		<div class="btns"><button class="b" type="button" id="libNow">Ask now</button><button class="b" type="button" id="libFix">Ask for today's cart</button><span class="big" id="libT" style="font-size:32px;margin-left:auto">0.0 s</span></div>
+		<div class="shelves" id="shelves" aria-hidden="true"></div>
+	</section>
+
+	<section class="panel" data-name="Timeline" role="tabpanel" hidden>
+		<span class="how">2 · Timeline</span>
+		<h2>Nobody changed the code. The bucket kept growing.</h2>
+		<svg id="tl" viewBox="0 0 800 300" role="img" aria-label="Listing time per question rose from half a second in January to 30 seconds in October"></svg>
+		<p class="note">Listing time tracks the file count, and nothing ever deletes old files. Dashed: where it goes if nobody acts.</p>
+	</section>
+
+	<section class="panel" data-name="One run" role="tabpanel" hidden>
+		<span class="how">3 · Follow one run</span>
+		<h2>Scrub through one run</h2>
+		<div class="btns"><button class="b on" type="button" data-run="now">Now</button><button class="b" type="button" data-run="after">After both fixes</button></div>
+		<div class="lane" id="runLane"></div>
+		<input type="range" id="runR" min="0" max="1000" value="0" aria-label="Position in the run">
+		<p><span class="big" id="runT" style="font-size:32px">0.0 s</span> <span id="runS" class="sub"></span></p>
+		<div class="legend"><span style="--c:var(--slow)">listing files</span><span style="--c:var(--read)">reading rows</span><span style="--c:var(--other)">everything else</span></div>
+	</section>
+
+	<section class="panel" data-name="Five whys" role="tabpanel" hidden>
+		<span class="how">4 · Five whys</span>
+		<h2>From "it's slow" to the cause</h2>
+		<div id="whys"></div>
+	</section>
+
+	<section class="panel" data-name="Waterfall" role="tabpanel" hidden>
+		<span class="how">5 · Follow the seconds</span>
+		<h2>Where every saved second comes from</h2>
+		<svg id="wf" viewBox="0 0 600 300" role="img" aria-label="94.5 seconds, minus 60 from asking once, minus 28.5 from reading today only, leaves 6"></svg>
+	</section>
+
+	<section class="panel" data-name="Before / after" role="tabpanel" hidden>
+		<span class="how">6 · Before and after</span>
+		<h2>The same picture, twice</h2>
+		<div class="reveal"><div class="layer" id="revA"></div></div>
+		<div class="reveal"><div class="layer" id="revB"></div></div>
+		<p class="note">Both on one scale. The top bar is one run, the thin bar is files listed per question.</p>
+	</section>
+
+	<section class="panel" data-name="What if" role="tabpanel" hidden>
+		<span class="how">7 · Simulator</span>
+		<h2>What if the bucket keeps growing?</h2>
+		<div class="grid2">
+			<div style="display:flex;flex-direction:column;gap:12px">
+				<label>Files in the bucket <span class="mono" id="simV"></span><input type="range" id="simF" min="30000" max="2000000" step="10000" value="600000"></label>
+				<label><input type="checkbox" id="simR1"> Read only today's folder</label>
+				<label><input type="checkbox" id="simR2"> Ask once, not three times</label>
+			</div>
+			<div style="display:flex;flex-direction:column;gap:6px"><span class="label">One run</span><span class="big" id="simJ">94.5 s</span><span class="note" id="simL"></span></div>
+		</div>
+		<p class="note">Model: listing takes 30 s per 600,000 files, plus 4.5 s of other work per run. Illustrative, not a forecast.</p>
+	</section>
+
+	<section class="panel" data-name="System map" role="tabpanel" hidden>
+		<span class="how">8 · System map</span>
+		<h2>The slow hop isn't in our code</h2>
+		<div class="btns"><button class="b on" type="button" data-map="now">Now</button><button class="b" type="button" data-map="after">After</button></div>
+		<svg id="map" viewBox="0 0 760 240" role="img" aria-label="The job asks the warehouse, which lists the whole bucket three times; after the fixes it lists today's folder once"></svg>
+	</section>
+
+	<section class="panel" data-name="Code walk" role="tabpanel" hidden>
+		<span class="how">9 · Walk the code</span>
+		<h2>Line by line, with a clock</h2>
+		<div class="grid2">
+			<div class="code" id="cA"><span>source = "bucket/files/*"</span><span>a = query(A_SQL, source)</span><span>b = query(B_SQL, source)</span><span>c = query(C_SQL, source)</span><span>publish(a, b, c)</span></div>
+			<div class="code after" id="cB"><span>source = f"bucket/files/day={today}/*"</span><span>a, b, c = query(ALL_SQL, source)</span><span>publish(a, b, c)</span></div>
+		</div>
+		<div class="btns"><button class="b" type="button" id="cNext">Next line</button><span class="mono" id="cClock" style="align-self:center"></span></div>
+		<p class="note" id="cNote">Pseudocode, simplified for reading.</p>
+	</section>
+
+	<section class="panel" data-name="One page" role="tabpanel" hidden>
+		<span class="how">10 · One page</span>
+		<h2>Problem, cause, fix, effect</h2>
+		<div class="grid4">
+			<div class="cell s"><span class="label">Problem</span><span class="big">94.5 s</span>per run, almost all of it waiting.</div>
+			<div class="cell s"><span class="label">Cause</span><span class="big">3 × 600k</span>files listed per run to read 30k.</div>
+			<div class="cell f"><span class="label">Fix</span><span class="big">2 lines</span>Read today's folder. Ask once.</div>
+			<div class="cell f"><span class="label">Effect</span><span class="big">≈ 6 s</span>per run, about 94% less.</div>
+		</div>
+	</section>
+
+	<div class="kept">
+		<p class="label">What I keep</p>
+		<p>Different readers pick different tabs. The analogy for someone outside the team, the waterfall for whoever asks what we save, the code walk for whoever reviews the fix. Two or three land. The rest were worth seeing once.</p>
+	</div>
+</main>
+<script>
+// One model drives every tab: listing time grows with files listed.
+const ALL = 600000, TODAY = 30000, PER = 30 / ALL, OTHER = 4.5;
+const job = (files, r1, r2) => (r2 ? 1 : 3) * PER * (r1 ? TODAY : files) + OTHER;
+const NOW = job(ALL, false, false), AFTER = 6;
+const $ = id => document.getElementById(id);
+const fmt = v => v.toFixed(1);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const panels = [...document.querySelectorAll('.panel')];
+const tabs = $('tabs');
+panels.forEach((p, i) => {
+	const b = document.createElement('button');
+	b.type = 'button'; b.role = 'tab'; b.textContent = (i + 1) + ' · ' + p.dataset.name;
+	b.onclick = () => show(i);
+	tabs.appendChild(b);
+});
+function show(i) {
+	panels.forEach((p, j) => p.hidden = j !== i);
+	[...tabs.children].forEach((b, j) => b.setAttribute('aria-selected', String(j === i)));
+}
+tabs.addEventListener('keydown', e => {
+	const i = [...tabs.children].indexOf(document.activeElement);
+	if (i < 0 || !['ArrowRight', 'ArrowLeft'].includes(e.key)) return;
+	const n = (i + (e.key === 'ArrowRight' ? 1 : -1) + panels.length) % panels.length;
+	tabs.children[n].focus(); show(n);
+});
+show(0);
+
+// 1 analogy
+const N = 600, T = 30, sh = $('shelves');
+sh.innerHTML = Array.from({ length: N }, (_, i) => `<i class="${i >= N - T ? 'today' : ''}"></i>`).join('');
+const cells = [...sh.children];
+let raf = 0;
+function walk(fixed) {
+	cancelAnimationFrame(raf);
+	cells.forEach(c => c.classList.remove('walked'));
+	$('libNow').classList.toggle('on', !fixed); $('libFix').classList.toggle('on', fixed);
+	const from = fixed ? N - T : 0, total = fixed ? PER * TODAY : PER * ALL, dur = fixed ? 600 : 3500, t0 = performance.now();
+	const step = now => {
+		const p = reduced ? 1 : Math.min(1, (now - t0) / dur), k = Math.round(from + (N - from) * p);
+		for (let i = from; i < k; i++) cells[i].classList.add('walked');
+		$('libT').textContent = fmt(total * p) + ' s';
+		if (p < 1) raf = requestAnimationFrame(step);
+	};
+	raf = requestAnimationFrame(step);
+}
+$('libNow').onclick = () => walk(false); $('libFix').onclick = () => walk(true);
+
+// 2 timeline
+(() => {
+	const X0 = 50, X1 = 780, Y0 = 250, Y1 = 30, dx = m => X0 + (X1 - X0) * m / 11, dy = v => Y0 - (Y0 - Y1) * v / 50;
+	let h = '';
+	[0, 10, 20, 30, 40, 50].forEach(v => h += `<line x1="${X0}" x2="${X1}" y1="${dy(v)}" y2="${dy(v)}" stroke="var(--rule)"/><text x="${X0 - 8}" y="${dy(v) + 4}" text-anchor="end">${v} s</text>`);
+	'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ').forEach((m, i) => h += `<text x="${dx(i)}" y="${Y0 + 20}" text-anchor="middle">${m}</text>`);
+	h += `<polyline fill="none" stroke="var(--slow)" stroke-width="2.5" points="${[0, .5, 1, 2.5, 2, 4.5, 3, 7.5, 4, 10.5, 5, 13.5, 6, 16.5, 7, 20, 8, 23, 9, 30].map((v, i) => i % 2 ? dy(v) : dx(v)).join(' ').replace(/(\S+) (\S+)/g, '$1,$2')}"/>`;
+	h += `<line x1="${dx(9)}" y1="${dy(30)}" x2="${dx(11)}" y2="${dy(37)}" stroke="var(--slow)" stroke-width="2" stroke-dasharray="6 5"/>`;
+	h += `<circle cx="${dx(9)}" cy="${dy(30)}" r="5" fill="var(--slow)"/><text x="${dx(9) - 10}" y="${dy(30) - 12}" text-anchor="end" style="fill:var(--fg)">30 s per question today</text>`;
+	h += `<circle cx="${dx(9)}" cy="${dy(1.5)}" r="5" fill="var(--fast)"/><text x="${dx(9) - 10}" y="${dy(1.5) - 10}" text-anchor="end" style="fill:var(--fast)">1.5 s reading today's folder only</text>`;
+	$('tl').innerHTML = h;
+})();
+
+// 3 one run
+const RUNS = {
+	now: [...[0, 1, 2].flatMap(() => [['l', 30, 'Listing all 600,000 files'], ['r', .9, 'Reading the rows it needed'], ['o', .6, 'Sending and publishing']])],
+	after: [['o', .1, 'Sending the one question'], ['l', 1.5, "Listing today's 30,000 files"], ['r', 2.7, 'Reading all three answers'], ['o', 1.7, 'Publishing']],
+};
+const COL = { l: '--slow', r: '--read', o: '--other' };
+let run = 'now';
+function drawRun() {
+	const J = RUNS[run], tot = J.reduce((a, j) => a + j[1], 0);
+	$('runLane').innerHTML = J.map(([k, s]) => `<i style="width:${s / NOW * 100}%;background:var(${COL[k]})"></i>`).join('');
+	const t = $('runR').value / 1000 * tot;
+	let x = 0, cur = J[J.length - 1];
+	for (const j of J) { if (t < x + j[1]) { cur = j; break; } x += j[1]; }
+	$('runT').textContent = fmt(t) + ' s';
+	$('runS').textContent = t >= tot ? `Done. ${fmt(tot)} s in total.` : cur[2];
+}
+document.querySelectorAll('[data-run]').forEach(b => b.onclick = () => {
+	run = b.dataset.run;
+	document.querySelectorAll('[data-run]').forEach(x => x.classList.toggle('on', x === b));
+	drawRun();
+});
+$('runR').oninput = drawRun; drawRun();
+
+// 4 whys
+$('whys').innerHTML = [
+	['Why is the job slow?', 'One run takes 94.5 s, and almost all of it is waiting on the warehouse.', ''],
+	['Why is it waiting?', 'It asks three questions, and each waits about 30 s.', 'Fix: ask once'],
+	['Why does each question wait 30 s?', 'The warehouse lists files before it reads anything. Reading takes under a second.', ''],
+	['Why does listing take so long?', 'It lists the whole bucket, 600,000 files, to find today\'s 30,000.', "Fix: read only today's folder"],
+	['Why is the bucket so big?', 'Nothing deletes old files, so it grows every day.', 'Later: a cleanup rule'],
+].map(([q, a, f], i) => `<div class="why"><b>${i + 1}</b><div><div class="q">${q}</div><div class="sub">${a}</div>${f ? `<div class="fixtag">${f}</div>` : ''}</div></div>`).join('');
+
+// 5 waterfall
+(() => {
+	const steps = [['now', NOW, 1], ['ask once', 60, 0], ['today only', NOW - 60 - AFTER, 0], ['after', AFTER, 1]];
+	const X0 = 50, X1 = 590, Y0 = 250, Y1 = 30, y = v => Y0 - (Y0 - Y1) * v / 100, gap = (X1 - X0) / 4, bw = gap * .6;
+	let h = '', run = 0;
+	[0, 25, 50, 75, 100].forEach(v => h += `<line x1="${X0}" x2="${X1}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule)"/><text x="${X0 - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`);
+	steps.forEach(([l, v, total], i) => {
+		const top = total ? v : run, bot = total ? 0 : run - v; run = total ? v : bot;
+		const x = X0 + i * gap + (gap - bw) / 2;
+		h += `<rect x="${x}" y="${y(top)}" width="${bw}" height="${Math.max(2, y(bot) - y(top))}" rx="3" fill="var(${i === 0 ? '--slow' : '--fast'})" ${total ? '' : 'fill-opacity=".3" stroke="var(--fast)" stroke-dasharray="4 3"'}/>`;
+		h += `<text x="${x + bw / 2}" y="${y(top) - 8}" text-anchor="middle" style="fill:var(--fg)">${total ? fmt(v) + ' s' : '−' + fmt(v)}</text><text x="${x + bw / 2}" y="${Y0 + 20}" text-anchor="middle">${l}</text>`;
+	});
+	$('wf').innerHTML = h;
+})();
+
+// 6 before / after
+const side = (tag, col, J, files, w, sec) => `<span class="label" style="color:var(${col})">${tag}</span>
+	<div class="lane">${J.map(([k, s]) => `<i style="width:${s / NOW * 100}%;background:var(${COL[k]})"></i>`).join('')}</div>
+	<div class="lane" style="height:14px"><i style="width:${w}%;background:var(${col})"></i></div>
+	<span class="note">${files}</span><span class="big" style="color:var(${col})">${sec}</span>`;
+$('revA').innerHTML = side('Now', '--slow', RUNS.now, '600,000 files listed, three times', 100, fmt(NOW) + ' s');
+$('revB').innerHTML = side('After', '--fast', RUNS.after, '30,000 files listed, once', 5, '≈ ' + AFTER + ' s');
+
+// 7 simulator
+function sim() {
+	const f = +$('simF').value, r1 = $('simR1').checked, r2 = $('simR2').checked;
+	$('simV').textContent = f.toLocaleString('en-US');
+	$('simJ').textContent = fmt(job(f, r1, r2)) + ' s';
+	$('simL').textContent = `${r2 ? 1 : 3} × ${fmt(PER * (r1 ? TODAY : f))} s listing + ${OTHER} s other work`;
+}
+['simF', 'simR1', 'simR2'].forEach(id => $(id).addEventListener('input', sim)); sim();
+
+// 8 system map
+function drawMap(after) {
+	const box = (x, y, w, t, s) => `<rect x="${x}" y="${y}" width="${w}" height="64" rx="6" fill="var(--panel)" stroke="var(--rule)"/><text x="${x + w / 2}" y="${y + 28}" text-anchor="middle" style="fill:var(--fg);font-size:14px">${t}</text><text x="${x + w / 2}" y="${y + 47}" text-anchor="middle">${s}</text>`;
+	let h = box(20, 88, 150, 'Nightly job', 'our code') + box(300, 88, 160, 'Warehouse', 'answers questions') + box(590, 88, 150, 'Bucket', after ? "today's 30,000" : 'all 600,000');
+	const n = after ? 1 : 3;
+	for (let i = 0; i < n; i++) {
+		const y = 102 + i * 18 - (n - 1) * 9;
+		h += `<line x1="170" y1="${y}" x2="300" y2="${y}" stroke="var(--muted)" stroke-width="1.5"/>`;
+		h += `<line x1="460" y1="${y}" x2="590" y2="${y}" stroke="var(${after ? '--fast' : '--slow'})" stroke-width="3"/>`;
+	}
+	h += `<text x="235" y="70" text-anchor="middle">${n} question${n > 1 ? 's' : ''}</text><text x="525" y="70" text-anchor="middle" style="fill:var(${after ? '--fast' : '--slow'})">${n} × ${after ? '1.5' : '30'} s listing</text>`;
+	h += `<text x="380" y="210" text-anchor="middle">The time goes here, between the warehouse and the bucket.</text>`;
+	$('map').innerHTML = h;
+}
+document.querySelectorAll('[data-map]').forEach(b => b.onclick = () => {
+	document.querySelectorAll('[data-map]').forEach(x => x.classList.toggle('on', x === b));
+	drawMap(b.dataset.map === 'after');
+});
+drawMap(false);
+
+// 9 code walk
+const A = [...$('cA').children], B = [...$('cB').children];
+const COST_A = [0, 30.9, 30.9, 30.9, 1.8], COST_B = [0, 4.2, 1.8];
+let line = -1;
+$('cNext').onclick = () => {
+	line = (line + 1) % A.length;
+	A.forEach((s, i) => s.classList.toggle('cur', i === line));
+	const bl = Math.min(line, B.length - 1);
+	B.forEach((s, i) => s.classList.toggle('cur', i === bl && line < B.length));
+	const ta = COST_A.slice(0, line + 1).reduce((a, b) => a + b, 0) + (line === A.length - 1 ? 0 : 0);
+	const tb = COST_B.slice(0, Math.min(line, B.length - 1) + 1).reduce((a, b) => a + b, 0);
+	$('cClock').innerHTML = `<span class="slow">before ${fmt(ta)} s</span> · <span class="fast">after ${fmt(tb)} s</span>`;
+};
+</script>
+</body>
+</html>

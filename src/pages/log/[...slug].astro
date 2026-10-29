@@ -4,7 +4,8 @@ import FormattedDate from '../../components/FormattedDate.astro';
 import Base from '../../layouts/Base.astro';
 
 export async function getStaticPaths() {
-	const posts = await getCollection('log', ({ data }) => !data.draft);
+	// Drafts get a page in `astro dev` only, so they can be previewed before publishing.
+	const posts = await getCollection('log', ({ data }) => import.meta.env.DEV || !data.draft);
 	return posts.map((post) => ({
 		params: { slug: post.id },
 		props: post,
