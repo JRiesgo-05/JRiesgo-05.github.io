@@ -63,6 +63,8 @@ The same goes for how we look things up. Searching Google and asking an agent ar
 
 **Doesn't writing everything down take time?** Yes, a few minutes per entry. I've found it's cheaper than relearning the same thing in three months.
 
+**Isn't some of this obvious?** Some of it, yes. You'd be surprised how many people on a real team still don't do it. Knowing a move and making it a habit are different things, so I write the obvious ones down too.
+
 **Why public?** Writing for someone else makes me cut the parts I don't actually understand. A private note lets me get away with them.
 
 **Do you write these with AI?** I use agents to help draft and edit. The learning, the examples and the opinions are mine.

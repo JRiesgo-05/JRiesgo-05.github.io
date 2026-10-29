@@ -28,6 +28,10 @@ const principles = [
 			{ href: 'https://x.com/trq212/status/2052809885763747935', label: 'Thariq: The Unreasonable Effectiveness of HTML' },
 			{ href: 'https://x.com/karpathy/status/2105819303471976479', label: 'Karpathy on understanding LLM outputs' },
 		],
+		quote: {
+			text: 'Yeah, when I saw what [a colleague] made, I told you all. Now .pptx feels like a dinosaur.',
+			by: 'A teammate, translated from Filipino',
+		},
 	},
 	{
 		title: 'Principles over band-aids',
@@ -119,6 +123,11 @@ const work = [
 
 	<section id="principles" style="display: flex; flex-direction: column; gap: 32px;">
 		<h2 class="label">What I believe about learning</h2>
+		<p class="muted" style="margin: 0; font-size: 16px;">
+			Some of these will look obvious. I thought so too, until I watched how my team actually works.
+			In workshops and pairing sessions, many people still ask from scratch, take the first fix and
+			skim a wall of text. Knowing a move isn't the same as doing it.
+		</p>
 		{
 			principles.map((p) => (
 				<div style="display: flex; flex-direction: column; gap: 6px;">
@@ -146,6 +155,12 @@ const work = [
 								<a href={r.href}>{r.label}</a>
 							))}
 						</p>
+					)}
+					{p.quote && (
+						<figure class="quote" style="margin-top: 10px;">
+							<blockquote class="serif">“{p.quote.text}”</blockquote>
+							<figcaption class="faint">{p.quote.by}</figcaption>
+						</figure>
 					)}
 				</div>
 			))
