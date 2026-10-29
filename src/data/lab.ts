@@ -60,4 +60,9 @@ export const examples = [
 		href: '/examples/ask-for-ten/',
 		body: 'An analogy, a simulator, a code walk and seven more, from one prompt.',
 	},
+	{
+		title: 'Three rounds, one artifact',
+		href: '/examples/steer-the-artifact/',
+		body: 'Three short prompts that turned a flat reference page into a story you can step through.',
+	},
 ];

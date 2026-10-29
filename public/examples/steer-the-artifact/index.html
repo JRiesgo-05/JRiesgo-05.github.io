@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Three rounds, one artifact</title>
+<meta name="description" content="Three short prompts that steered one explainer from a flat reference page to a story you can step through. Each prompt sits next to the version it produced.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Three rounds stacked: prompt on the left, a working miniature of what it produced on the right. */
+:root {
+	--bg: #fcfcfa; --fg: #22262a; --muted: #59605c; --faint: #6c7570; --rule: #e4e8e3; --panel: #f1f3ef; --field: #eef2ea; --road: #d5dbd3;
+	--accent: #4f6f5a; --accent-soft: #e3ece5; --warn: #b4532a;
+	--serif: 'Instrument Serif', Georgia, serif; --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+	--mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #161917; --fg: #e6e9e6; --muted: #b3bab5; --faint: #8f9892; --rule: #2c322e; --panel: #1f2420; --field: #1c221e; --road: #3a423c;
+		--accent: #9fc1a9; --accent-soft: #233029; --warn: #e99572;
+		color-scheme: dark;
+	}
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 48px 16px 72px; display: flex; flex-direction: column; gap: 56px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; }
+h2 { font-size: clamp(26px, 4vw, 32px); line-height: 1.15; }
+h3 { font-size: 22px; line-height: 1.2; }
+p { margin: 0; }
+a { color: var(--fg); text-decoration-color: var(--accent); text-underline-offset: 4px; }
+.label { font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin: 0; }
+.sub { color: var(--muted); max-width: 62ch; }
+.note { font-size: 13px; color: var(--faint); }
+code { font-family: var(--mono); font-size: 13px; }
+header { display: flex; flex-direction: column; gap: 18px; }
+
+/* Strip of the three rounds */
+.strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.strip a { text-decoration: none; border: 1px solid var(--rule); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.strip a:hover { border-color: var(--accent); }
+.strip .n { font-family: var(--serif); font-style: italic; color: var(--accent); font-size: 18px; }
+.strip .q { font-size: 14px; color: var(--muted); }
+.strip .got { font-size: 13px; color: var(--faint); border-top: 1px solid var(--rule); padding-top: 6px; margin-top: auto; }
+@media (max-width: 640px) { .strip { grid-template-columns: 1fr; } }
+
+/* A round */
+.round { display: grid; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); gap: 24px; align-items: start; border-top: 1px solid var(--rule); padding-top: 32px; }
+.side { display: flex; flex-direction: column; gap: 14px; }
+.prompt { background: var(--panel); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.verdict { font-size: 15px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.verdict b { font-weight: 600; color: var(--fg); }
+.verdict .miss { color: var(--warn); }
+@media (max-width: 760px) { .round { grid-template-columns: 1fr; } }
+
+/* Miniature frame */
+.mini { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--bg); }
+.mini .chrome { display: flex; gap: 6px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--rule); font-size: 12px; color: var(--faint); }
+.mini .chrome i { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); display: inline-block; }
+.mini .body { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+
+/* Round 1 */
+.pipe { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.stage { border: 1px solid var(--rule); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stage.on { background: var(--accent-soft); border-color: var(--accent); }
+.stage .s { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+.stage .t { font-family: var(--serif); font-size: 19px; line-height: 1.1; }
+.stage .b { font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
+.stage .b.bad { color: var(--warn); }
+@media (max-width: 480px) { .pipe { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.card { border-top: 1px solid var(--rule); padding-top: 12px; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 12px; font-size: 14px; }
+.card h3 { grid-column: 1 / -1; font-size: 20px; margin-bottom: 4px; }
+.card dt { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding-top: 2px; }
+.card dd { margin: 0; color: var(--muted); }
+
+/* Diagrams */
+.viz { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; }
+.viz svg { display: block; width: 100%; min-width: 480px; height: auto; }
+svg text { font-family: var(--sans); font-size: 12px; fill: var(--fg); }
+svg text.sm { font-size: 10.5px; fill: var(--faint); }
+svg text.mono { font-family: var(--mono); font-size: 10.5px; }
+svg text.acc { fill: var(--accent); }
+svg text.warn { fill: var(--warn); }
+.ln { stroke: var(--faint); stroke-width: 1.5; fill: none; }
+.la { stroke: var(--accent); stroke-width: 1.75; fill: none; }
+.dash { stroke-dasharray: 4 4; }
+.soft { fill: var(--panel); stroke: var(--rule); }
+.ah { fill: var(--faint); } .ah-acc { fill: var(--accent); }
+
+/* Round 3 map */
+.map { background: var(--field); border: 1px solid var(--rule); border-radius: 8px; overflow-x: auto; }
+.map svg { display: block; width: 100%; min-width: 480px; height: auto; }
+.road { stroke: var(--road); stroke-width: 12; fill: none; stroke-linecap: round; }
+.road-new { stroke: var(--accent); stroke-width: 6; fill: none; stroke-linecap: round; }
+.route { stroke: var(--accent); stroke-width: 2; fill: none; stroke-dasharray: 6 6; }
+.roof { fill: var(--muted); } .wall { fill: var(--bg); stroke: var(--muted); stroke-width: 1.5; } .door { fill: var(--muted); }
+.you .roof, .you .door { fill: var(--accent); } .you .wall { stroke: var(--accent); }
+.depot { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; }
+.van { fill: var(--accent); }
+.halo { fill: none; stroke: var(--warn); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.sign { fill: var(--bg); stroke: var(--accent); stroke-width: 1.5; }
+.plate { fill: var(--accent); }
+svg text.plate-t { fill: var(--bg); font-size: 9.5px; font-weight: 600; letter-spacing: .06em; }
+[data-from] { transition: opacity .3s; }
+.off { opacity: 0; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--muted); cursor: pointer; }
+.steps button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--bg); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mapnote { font-size: 14px; color: var(--muted); min-height: 2.8em; }
+.badge { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; max-width: 260px; }
+.badge .strap { height: 22px; background: var(--accent); }
+.badge .in { padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.badge .ty { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.badge .nm { font-family: var(--serif); font-size: 22px; line-height: 1.1; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+
+/* Summary table */
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 15px; }
+th, td { text-align: left; padding: 10px 12px; border-top: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 12px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); border-top: 0; }
+td:first-child { font-family: var(--serif); font-style: italic; color: var(--accent); font-size: 18px; white-space: nowrap; }
+td.you { font-weight: 500; }
+td.it { color: var(--muted); }
+footer { font-size: 14px; color: var(--faint); border-top: 1px solid var(--rule); padding-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+	<p class="label">Example · <a href="/log/name-the-gap/">Name the gap, not the fix</a></p>
+	<h1>Three rounds, one artifact</h1>
+	<p class="sub">After Claude set up search for this site, I asked it to explain what it did. These are the three prompts I sent, word for word, each next to a small working copy of the version it produced. Personal details from the original page are left out.</p>
+	<div class="strip">
+		<a href="#r1"><span class="n">Round one</span><span class="q">"create an artifact … i want to learn it how it works and why you did it"</span><span class="got">A correct reference page</span></a>
+		<a href="#r2"><span class="n">Round two</span><span class="q">"add visualization for the examples"</span><span class="got">The same page, plus a diagram per change</span></a>
+		<a href="#r3"><span class="n">Round three</span><span class="q">"Make it more story based and more tangible visualization"</span><span class="got">A story: a house with no road to it</span></a>
+	</div>
+</header>
+
+<!-- Round 1 -->
+<section class="round" id="r1">
+	<div class="side">
+		<h2>Round one</h2>
+		<div class="prompt"><span class="label">Prompt</span><p>create an artifact after just what you did there i want to learn it how it works and why you did it</p></div>
+		<div class="verdict"><span><b>Got:</b> Google's four steps, then each change with what and why.</span><span class="miss"><b>Missing:</b> it read like documentation. Every fact was there and none of it stuck.</span></div>
+	</div>
+	<div class="mini">
+		<div class="chrome"><i></i><i></i><i></i><span>Version 1</span></div>
+		<div class="body">
+			<span class="label">Google works in four steps</span>
+			<div class="pipe">
+				<div class="stage on"><span class="s">1</span><span class="t">Discover</span><span class="b bad">before: no</span></div>
+				<div class="stage"><span class="s">2</span><span class="t">Crawl</span><span class="b">before: never tried</span></div>
+				<div class="stage"><span class="s">3</span><span class="t">Index</span><span class="b">before: not stored</span></div>
+				<div class="stage"><span class="s">4</span><span class="t">Rank</span><span class="b">before: not eligible</span></div>
+			</div>
+			<dl class="card">
+				<h3>Sitemap submitted</h3>
+				<dt>What</dt><dd>Submitted <code>sitemap-index.xml</code> in Search Console.</dd>
+				<dt>Why</dt><dd>A sitemap lists every page. Astro already generated one, but nobody had told Google where it was.</dd>
+			</dl>
+			<dl class="card">
+				<h3>robots.txt</h3>
+				<dt>What</dt><dd>A new file at <code>public/robots.txt</code>.</dd>
+				<dt>Why</dt><dd>Every crawler asks for it first. It points them at the sitemap.</dd>
+			</dl>
+			<p class="note">…and five more cards like these.</p>
+		</div>
+	</div>
+</section>
+
+<!-- Round 2 -->
+<section class="round" id="r2">
+	<div class="side">
+		<h2>Round two</h2>
+		<div class="prompt"><span class="label">Prompt</span><p>add visualization for the examples</p></div>
+		<div class="verdict"><span><b>Got:</b> every card kept its text and gained a diagram: a flow, a tree, a request sequence, a graph of which profiles point to which.</span><span class="miss"><b>Missing:</b> each picture explained one part. Nothing tied the parts into one thing I could hold in my head.</span></div>
+	</div>
+	<div class="mini">
+		<div class="chrome"><i></i><i></i><i></i><span>Version 2</span></div>
+		<div class="body">
+			<dl class="card" style="border-top:0;padding-top:0;">
+				<h3>robots.txt</h3>
+				<dt>Why</dt><dd>Every crawler asks for it first. It points them at the sitemap.</dd>
+			</dl>
+			<div class="viz">
+				<svg viewBox="0 0 560 200" role="img" aria-label="Request sequence: crawler asks for robots.txt, follows it to the sitemap, then fetches each page">
+					<defs>
+						<marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0 0L10 5L0 10z"/></marker>
+						<marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah-acc" d="M0 0L10 5L0 10z"/></marker>
+					</defs>
+					<rect class="soft" x="20" y="10" width="120" height="30" rx="6"/><text x="80" y="30" text-anchor="middle">Googlebot</text>
+					<rect class="soft" x="420" y="10" width="120" height="30" rx="6"/><text x="480" y="30" text-anchor="middle">the site</text>
+					<line class="ln dash" x1="80" y1="40" x2="80" y2="190"/><line class="ln dash" x1="480" y1="40" x2="480" y2="190"/>
+					<path class="la" d="M80 64H476" marker-end="url(#m2)"/><text class="mono acc" x="280" y="58" text-anchor="middle">1 · GET /robots.txt</text>
+					<path class="ln dash" d="M480 88H84" marker-end="url(#m1)"/><text class="mono" x="280" y="82" text-anchor="middle">200 · Sitemap: …/sitemap-index.xml</text>
+					<path class="la" d="M80 120H476" marker-end="url(#m2)"/><text class="mono acc" x="280" y="114" text-anchor="middle">2 · GET /sitemap-index.xml</text>
+					<path class="ln dash" d="M480 144H84" marker-end="url(#m1)"/><text class="mono" x="280" y="138" text-anchor="middle">200 · 5 page URLs</text>
+					<path class="la" d="M80 176H476" marker-end="url(#m2)"/><text class="mono acc" x="280" y="170" text-anchor="middle">3 · GET each page</text>
+				</svg>
+			</div>
+			<p class="note">One of six diagrams, each on its own card.</p>
+		</div>
+	</div>
+</section>
+
+<!-- Round 3 -->
+<section class="round" id="r3">
+	<div class="side">
+		<h2>Round three</h2>
+		<div class="prompt"><span class="label">Prompt</span><p>Make it more story based and more tangible visualization</p></div>
+		<div class="verdict"><span><b>Got:</b> one story. The web is a town, Googlebot drives vans along links, and the site was a house with no road to it. Every change became something built: an owner's sign, a floor plan (the sitemap), a booked visit, a nameplate, a road.</span><span><b>Kept:</b> every fact from round one.</span></div>
+	</div>
+	<div class="mini">
+		<div class="chrome"><i></i><i></i><i></i><span>Version 3</span></div>
+		<div class="body">
+			<div class="map"><svg id="town" viewBox="0 0 680 320" role="img" aria-label="Town map that adds a way in to the site at each step"></svg></div>
+			<div class="steps" role="group" aria-label="Map steps">
+				<button type="button" data-step="0" aria-pressed="true">Before</button>
+				<button type="button" data-step="1" aria-pressed="false">+ Owner proven</button>
+				<button type="button" data-step="2" aria-pressed="false">+ Floor plan</button>
+				<button type="button" data-step="3" aria-pressed="false">+ Visit booked</button>
+				<button type="button" data-step="4" aria-pressed="false">+ Name on the door</button>
+				<button type="button" data-step="5" aria-pressed="false">+ Road in</button>
+			</div>
+			<p class="mapnote" id="mapnote" aria-live="polite"></p>
+			<div class="row2">
+				<div class="badge"><div class="strap"></div><div class="in"><span class="ty">Person</span><span class="nm">Jerimiah Riesgo</span><span>Senior Python Developer</span><span class="ty" style="margin-top:6px;">Also me</span><span>LinkedIn · GitHub</span></div></div>
+				<p class="note">The structured data, drawn as an ID badge left at the door. In the full page, hovering a line on the badge highlights the matching line of JSON-LD.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px;">
+	<h2>What I named, what it chose</h2>
+	<p class="sub">Each prompt named a gap. None of them named the fix. The forms that worked came from the agent.</p>
+	<div class="tbl">
+		<table>
+			<thead><tr><th>Round</th><th>I named</th><th>It chose</th></tr></thead>
+			<tbody>
+				<tr><td>one</td><td class="you">"how it works and why you did it"</td><td class="it">A four-step model of search, and a what-and-why card per change</td></tr>
+				<tr><td>two</td><td class="you">"visualization"</td><td class="it">A different diagram type for each change: flow, tree, queue, sequence, graph</td></tr>
+				<tr><td>three</td><td class="you">"story based", "tangible"</td><td class="it">A town metaphor, one map that grows with the story, an ID badge, a calendar of what happens next</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<footer>From the log entry <a href="/log/name-the-gap/">Name the gap, not the fix</a>. The miniatures are rebuilt from the original page, with personal details removed.</footer>
+
+</div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('town');
+function el(tag, attrs, parent, text) {
+	const e = document.createElementNS(NS, tag);
+	for (const k in attrs) e.setAttribute(k, attrs[k]);
+	if (text != null) e.textContent = text;
+	(parent || svg).appendChild(e);
+	return e;
+}
+function house(cx, cy, label, sub, cls) {
+	const g = el('g', cls ? { class: cls } : {});
+	el('path', { class: 'roof', d: `M${cx - 28} ${cy - 4}L${cx} ${cy - 28}L${cx + 28} ${cy - 4}Z` }, g);
+	el('rect', { class: 'wall', x: cx - 21, y: cy - 4, width: 42, height: 30, rx: 2 }, g);
+	el('rect', { class: 'door', x: cx - 5, y: cy + 10, width: 10, height: 16, rx: 1 }, g);
+	el('text', { x: cx, y: cy + 44, 'text-anchor': 'middle' }, g, label);
+	if (sub) el('text', { x: cx, y: cy + 58, 'text-anchor': 'middle', class: 'sm' }, g, sub);
+}
+function at(node, from, only) {
+	node.setAttribute('data-from', from);
+	if (only) node.setAttribute('data-only', '1');
+	return node;
+}
+el('path', { class: 'road', d: 'M140 74H300' });
+el('path', { class: 'road', d: 'M360 74C420 74 450 66 500 66' });
+el('path', { class: 'road', d: 'M86 108C86 170 110 232 136 232' });
+el('path', { class: 'road', d: 'M196 236H300' });
+el('path', { class: 'road', d: 'M330 106V202' });
+at(el('path', { class: 'route', d: 'M140 52C330 0 640 0 640 196' }), 2);
+at(el('text', { x: 456, y: 20, class: 'sm acc' }, null, 'floor plan (sitemap)'), 2);
+at(el('path', { class: 'route', d: 'M140 96C300 170 470 230 552 254', 'stroke-width': 3 }), 3);
+at(el('text', { x: 236, y: 168, class: 'sm acc' }, null, 'booked visit'), 3);
+at(el('path', { class: 'road-new', d: 'M362 92C460 120 530 170 576 226' }), 5);
+at(el('text', { x: 482, y: 134, class: 'sm acc' }, null, 'road from LinkedIn'), 5);
+const depot = el('g', {});
+el('rect', { class: 'depot', x: 30, y: 40, width: 110, height: 68, rx: 6 }, depot);
+el('text', { x: 85, y: 70, 'text-anchor': 'middle' }, depot, 'Google');
+el('text', { x: 85, y: 88, 'text-anchor': 'middle', class: 'sm' }, depot, 'van depot');
+house(330, 78, 'LinkedIn');
+house(530, 70, 'other sites');
+house(166, 230, 'other sites');
+house(330, 228, 'GitHub');
+house(600, 254, 'the site', null, 'you');
+at(el('circle', { class: 'halo', cx: 600, cy: 262, r: 50 }), 0, true);
+at(el('text', { x: 600, y: 200, 'text-anchor': 'middle', class: 'sm warn' }, null, 'no road in'), 0, true);
+const sign = at(el('g', {}), 1);
+el('rect', { class: 'sign', x: 556, y: 196, width: 52, height: 20, rx: 3 }, sign);
+el('text', { x: 582, y: 210, 'text-anchor': 'middle', class: 'sm acc' }, sign, 'owner ✓');
+const plate = at(el('g', {}), 4);
+el('rect', { class: 'plate', x: 614, y: 196, width: 60, height: 20, rx: 3 }, plate);
+el('text', { x: 644, y: 210, 'text-anchor': 'middle', class: 'plate-t' }, plate, 'RIESGO');
+const van = el('g', {});
+el('rect', { class: 'van', x: -12, y: -8, width: 24, height: 13, rx: 3 }, van);
+el('circle', { class: 'van', cx: -6, cy: 7, r: 3 }, van);
+el('circle', { class: 'van', cx: 6, cy: 7, r: 3 }, van);
+
+const notes = [
+	'Before. The vans drive between other sites every day. No road reaches this house.',
+	'Owner proven. Search Console verified the house. Nothing new reaches it yet.',
+	'Floor plan handed over. The sitemap lists every room for Google to work through.',
+	'Visit booked. Request indexing puts the home page in the short line.',
+	'Name on the door. The description and the badge say whose house this is.',
+	'Road in. A link from LinkedIn, a site the vans visit constantly.',
+];
+const vanPaths = ['M140 74H300', 'M140 96C300 170 470 230 552 254', 'M362 92C460 120 530 170 576 226'];
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let anim = null;
+function moveVan(d) {
+	if (anim) { anim.remove(); anim = null; }
+	const probe = el('path', { d, fill: 'none' });
+	const pt = probe.getPointAtLength(probe.getTotalLength() * 0.55);
+	probe.remove();
+	van.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
+	if (reduce) return;
+	van.removeAttribute('transform');
+	anim = el('animateMotion', { dur: '4s', repeatCount: 'indefinite', path: d }, van);
+	if (anim.beginElement) anim.beginElement();
+}
+function setStep(n) {
+	svg.querySelectorAll('[data-from]').forEach((e) => {
+		const from = +e.getAttribute('data-from');
+		const show = e.hasAttribute('data-only') ? n === from : n >= from;
+		e.classList.toggle('off', !show);
+	});
+	document.querySelectorAll('.steps button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.step === n)));
+	document.getElementById('mapnote').textContent = notes[n];
+	moveVan(vanPaths[n >= 5 ? 2 : n >= 3 ? 1 : 0]);
+}
+document.querySelectorAll('.steps button').forEach((b) => b.addEventListener('click', () => setStep(+b.dataset.step)));
+setStep(0);
+</script>
+</body>
+</html>
