@@ -28,13 +28,6 @@ export const lab: LabItem[] = [
 		body: 'When I explain something to other people, I ask for ten ways in one artifact, same facts in each, and keep the two or three that land for that audience.',
 	},
 	{
-		name: 'Test-driven development',
-		status: 'Testing',
-		by: "Matt Pocock's skills",
-		href: 'https://github.com/mattpocock/skills',
-		body: 'Red, green, refactor, with the agent writing the failing test first. I want to see whether it keeps agents honest on bigger changes.',
-	},
-	{
 		name: 'pstack',
 		status: 'Testing',
 		by: 'Lauren Tan (poteto)',

@@ -15,7 +15,7 @@ So I started writing down what stuck. Not everything, just the things that chang
 
 There's a bigger reason too. When I talk about my workflow with a team or in a workshop, "I use AI a lot" doesn't mean much. I want something real to point at: how I got here, from my first GPT-2 experiment to how I work today, and the skills, repos and workflows I've tested along the way.
 
-Right now my daily driver is thin prompts and thick artifacts. I'm testing test-driven development with [Matt Pocock's skills](https://github.com/mattpocock/skills) and [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan, and I've moved on from heavy spec-driven development. The [Lab](/lab/) shows where each one stands, and each gets an entry once I know whether it stuck, including the ones that didn't.
+Right now my daily driver is thin prompts and thick artifacts. I'm testing [pstack](https://github.com/cursor/plugins/tree/main/pstack) by Lauren Tan, and I've moved on from heavy spec-driven development. The [Lab](/lab/) shows where each one stands, and each gets an entry once I know whether it stuck, including the ones that didn't.
 
 These are the three rules I keep coming back to.
 
