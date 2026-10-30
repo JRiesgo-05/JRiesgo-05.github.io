@@ -1,0 +1,30 @@
+---
+import FeedbackQuote from '../components/FeedbackQuote.astro';
+import Base from '../layouts/Base.astro';
+import { SITE_TITLE } from '../consts';
+import { feedback, RECOMMENDATIONS_URL } from '../data/feedback';
+---
+
+<Base title={`Feedback · ${SITE_TITLE}`} description="What people I've worked with say, quoted from LinkedIn.">
+	<header style="display: flex; flex-direction: column; gap: 16px;">
+		<h1 class="serif" style="margin: 0; font-size: clamp(44px, 9vw, 64px); line-height: 1.05;">Feedback</h1>
+		<p class="muted" style="margin: 0;">
+			What people I've worked with wrote about me on LinkedIn. I quote each one word for word, newest
+			first, and only after it's live there.
+		</p>
+	</header>
+
+	<section style="display: flex; flex-direction: column; gap: 36px;">
+		{feedback.map((f) => <FeedbackQuote item={f} />)}
+		<a href={RECOMMENDATIONS_URL} class="faint verified">
+			Verified on LinkedIn: read every recommendation in full →
+		</a>
+	</section>
+</Base>
+
+<style>
+	.verified::before {
+		content: '✓ ';
+		color: var(--accent);
+	}
+</style>

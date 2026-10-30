@@ -4,7 +4,8 @@ import FormattedDate from '../components/FormattedDate.astro';
 import Base from '../layouts/Base.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { lab, type Status } from '../data/lab';
-import { feedback, RECOMMENDATIONS_URL } from '../data/feedback';
+import FeedbackQuote from '../components/FeedbackQuote.astro';
+import { feedback } from '../data/feedback';
 
 const board: Status[] = ['Driving', 'Testing', 'Moved on'];
 
@@ -252,19 +253,11 @@ const work = [
 		feedback.length > 0 && (
 			<section id="feedback" style="display: flex; flex-direction: column; gap: 28px;">
 				<h2 class="label">What colleagues say</h2>
-				{feedback.map((f) => (
-					<figure class="quote">
-						<blockquote class="serif">“{f.quote}”</blockquote>
-						<figcaption>
-							<a href={f.profileUrl}>{f.name}</a>
-							<span class="faint">
-								{f.role} · {f.context} · {f.date}
-							</span>
-						</figcaption>
-					</figure>
+				{feedback.slice(0, 2).map((f) => (
+					<FeedbackQuote item={f} />
 				))}
-				<a href={RECOMMENDATIONS_URL} class="faint verified">
-					Verified on LinkedIn: read every recommendation in full →
+				<a href="/feedback/" class="faint">
+					{feedback.length > 2 ? `Read all ${feedback.length} →` : 'Open Feedback →'}
 				</a>
 			</section>
 		)
@@ -289,10 +282,6 @@ const work = [
 		display: flex;
 		flex-direction: column;
 		font-size: 15px;
-	}
-	.verified::before {
-		content: '✓ ';
-		color: var(--accent);
 	}
 	@media (max-width: 480px) {
 		#work > div,

@@ -1,3 +1,7 @@
+---
+import { feedback } from '../data/feedback';
+---
+
 <nav class="faint" style="display: flex; flex-wrap: wrap; gap: 24px;">
 	<a href="/">Home</a>
 	<a href="/log/">Log</a>
@@ -5,4 +9,5 @@
 	<a href="/lab/">Lab</a>
 	<a href="/#workshops">Workshops</a>
 	<a href="/#work">Work</a>
+	{feedback.length > 0 && <a href="/feedback/">Feedback</a>}
 </nav>

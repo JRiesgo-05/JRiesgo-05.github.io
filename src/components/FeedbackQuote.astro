@@ -1,0 +1,40 @@
+---
+import type { Feedback } from '../data/feedback';
+
+interface Props {
+	item: Feedback;
+}
+
+const { item } = Astro.props;
+---
+
+<figure class="quote">
+	<blockquote class="serif">“{item.quote}”</blockquote>
+	<figcaption>
+		<a href={item.profileUrl}>{item.name}</a>
+		<span class="faint">
+			{item.role} · {item.context} · {item.date}
+		</span>
+	</figcaption>
+</figure>
+
+<style>
+	.quote {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding-left: 20px;
+		border-left: 2px solid var(--underline);
+	}
+	.quote blockquote {
+		margin: 0;
+		font-size: 22px;
+		line-height: 1.4;
+	}
+	.quote figcaption {
+		display: flex;
+		flex-direction: column;
+		font-size: 15px;
+	}
+</style>
