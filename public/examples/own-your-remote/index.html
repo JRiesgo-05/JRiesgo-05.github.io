@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Own your remote</title>
+<meta name="description" content="The Claude Code session where I replaced Daikin's aircon app with my own: my messages as typed, and what Claude did between them.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* One session, condensed: my messages verbatim on the right, Claude's work on the left. */
+:root {
+	--bg: #fcfcfa; --fg: #22262a; --muted: #59605c; --faint: #6c7570; --rule: #e4e8e3; --panel: #f1f3ef; --code: #f4f5f2;
+	--accent: #4f6f5a; --accent-soft: #e3ece5; --warn: #b4532a; --warn-soft: #f6e6dc;
+	--serif: 'Instrument Serif', Georgia, serif; --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+	--mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #161917; --fg: #e6e9e6; --muted: #b3bab5; --faint: #8f9892; --rule: #2c322e; --panel: #1f2420; --code: #111412;
+		--accent: #9fc1a9; --accent-soft: #233029; --warn: #e99572; --warn-soft: #3a261d;
+		color-scheme: dark;
+	}
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 48px 16px 72px; display: flex; flex-direction: column; gap: 40px; }
+h1, h2 { font-family: var(--serif); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; }
+h2 { font-size: clamp(24px, 4vw, 30px); line-height: 1.15; }
+p { margin: 0; }
+a { color: var(--fg); text-decoration-color: var(--accent); text-underline-offset: 4px; }
+code { font-family: var(--mono); font-size: .85em; background: var(--code); padding: 1px 4px; border-radius: 3px; }
+.label { font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+.sub { color: var(--muted); max-width: 64ch; }
+.note { font-size: 13px; color: var(--faint); }
+header { display: flex; flex-direction: column; gap: 18px; }
+
+/* Tally of who did what */
+.tally { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .tally { grid-template-columns: 1fr 1fr; } }
+.tally div { border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; }
+.tally b { font-family: var(--serif); font-weight: 400; font-size: 34px; line-height: 1; }
+.tally span { font-size: 13px; color: var(--faint); }
+
+/* Phases */
+.phase { display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--rule); padding-top: 28px; }
+.phase .n { font-family: var(--serif); font-style: italic; color: var(--accent); font-size: 20px; }
+.chat { display: flex; flex-direction: column; gap: 10px; }
+.msg { border-radius: 8px; padding: 10px 14px; font-size: 15px; max-width: 88%; overflow-wrap: anywhere; }
+.msg.me { background: var(--warn-soft); align-self: flex-end; font-family: var(--mono); font-size: 13px; white-space: pre-wrap; }
+.msg.ai { background: var(--panel); align-self: flex-start; }
+.msg.ai p + p { margin-top: 6px; }
+.tool { font-family: var(--mono); font-size: 12px; color: var(--muted); border-left: 2px solid var(--accent); padding: 2px 10px; align-self: flex-start; max-width: 100%; overflow-wrap: anywhere; }
+.tool .ok { color: var(--accent); }
+.tool .bad { color: var(--warn); }
+.aside { font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.4; color: var(--muted); border-left: 2px solid var(--warn); padding: 2px 0 2px 14px; max-width: 60ch; }
+.turn { font-size: 13px; color: var(--accent); font-weight: 500; }
+
+/* Screenshots of the design as it changed */
+/* Each shot gets its own width (--w) so it reads the same at any page size; tall ones are cropped from the top. */
+.shot { margin: 0; align-self: flex-start; display: flex; flex-direction: column; gap: 6px; width: min(var(--w, 360px), 100%); }
+.shot img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); border-radius: 10px; }
+.shot img.top { aspect-ratio: 3 / 4; object-fit: cover; object-position: top; }
+.shot figcaption { font-size: 13px; color: var(--faint); }
+.shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.shots .shot { width: 100%; }
+.shots .shot img { aspect-ratio: 3 / 4; object-fit: cover; object-position: top; }
+
+/* What came out */
+.out { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 700px) { .out { grid-template-columns: 1fr; } }
+.out div { border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.out h3 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 0; }
+.out p { font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<header>
+		<p class="label">Example · I *wrote* my own aircon remote</p>
+		<h1>One session, one remote</h1>
+		<p class="sub">The Claude Code session where I replaced Daikin's app with my own. My messages are as I typed them. Claude's replies are cut down to the part that moved things forward. The hotspot name, network addresses and a part number are redacted.</p>
+		<div class="tally">
+			<div><b>~30</b><span>messages from me</span></div>
+			<div><b>0</b><span>lines of code I wrote</span></div>
+			<div><b>3</b><span>apps at the end</span></div>
+			<div><b>1</b><span>time I opened Daikin's app</span></div>
+		</div>
+	</header>
+
+	<section class="phase">
+		<p class="n">1 · The ask</p>
+		<div class="chat">
+			<div class="msg me">do you know daikin king split type ac? can we vibecode an app to have the remote control for it?</div>
+			<div class="msg ai"><p>Laid out four paths: a phone IR blaster, an ESP32 bridge, a smart IR hub, or the official Wi-Fi adapter. Pointed out that if the AC has Wi-Fi, Daikin's app already works, "so there's nothing to vibecode".</p></div>
+			<div class="msg me">but they suck that's the main reason i want one</div>
+			<div class="msg ai"><p>Agreed that's a good reason. Explained that with Wi-Fi, a custom app is <em>easier</em> than infrared, because it can talk to the adapter directly with no cloud and no login.</p></div>
+		</div>
+	</section>
+
+	<section class="phase">
+		<p class="n">2 · Finding out what the AC speaks</p>
+		<div class="chat">
+			<div class="msg me">Can I scan your home network from this Mac for the AC? It's one read-only request per device on your local network only. yes</div>
+			<div class="tool">curl …/common/basic_info on every address  <span class="bad">no answer</span></div>
+			<div class="msg ai"><p>The AC isn't on your Wi-Fi. Asked whether the indoor unit has a Wi-Fi light at all.</p></div>
+			<div class="msg me">They have wifi adapter, it has even a network name `DAIKINAP•••••`</div>
+			<div class="msg ai"><p>That's the adapter's own setup hotspot. Join it from your phone and open <code>http://192.168.127.1/common/basic_info</code>.</p></div>
+			<div class="msg me">page note found /common/basic_info</div>
+			<div class="msg ai"><p>Something is answering, so it's a newer adapter family. Sent five more URLs to try and asked for the country and the indoor model.</p></div>
+			<div class="msg me">model is FTKZ35WVM</div>
+			<div class="tool">web search: DSIoT adapters, pydaikin, Hubitat driver  <span class="ok">found /dsiot/multireq</span></div>
+			<div class="msg me">http://192.168.127.1/dsiot/multireq GET METHOD NOT ALLOWED
+The root route is ust this software is included following open source software blabla</div>
+			<div class="msg ai"><p>Confirmed: it's a DSIoT adapter, and the open-source <code>pydaikin</code> driver already maps it. Power, mode, temperature, fan, swing and sensor readings are all documented.</p><p>One blocker: only Daikin's app knows how to put the adapter on your home Wi-Fi.</p></div>
+			<div class="msg me">what's the app?</div>
+			<div class="msg ai"><p>DAIKIN Mobile Controller. Use it once to pair, then delete it.</p></div>
+		</div>
+	</section>
+
+	<section class="phase">
+		<p class="n">3 · Building it</p>
+		<div class="chat">
+			<div class="msg me">it's now connected</div>
+			<div class="tool">POST /dsiot/multireq on every address  <span class="ok">found the AC</span></div>
+			<div class="tool">read state  <span class="ok">on · cool · 25°C · room 26°C · 50% humidity · outside 33°C</span></div>
+			<div class="tool">write server.py + static/index.html, test a no-change write  <span class="ok">accepted</span></div>
+			<figure class="shot" style="--w:260px"><img src="v1-web.jpg" class="top" alt="First version: a plain dark phone web app with room, humidity and outside readings, a big On button, temperature with plus and minus, and rows of mode, fan and preset buttons." width="337" height="730" loading="lazy"><figcaption>The first design. It worked, and it looked like every other remote app.</figcaption></figure>
+			<div class="msg me">https://x.com/icanberk/status/2109031477484937571 can i have similar ui to this?</div>
+			<div class="tool">open the post in the browser pane  <span class="ok">it's a macOS menu bar app</span></div>
+			<div class="tool">swiftc Aircon.swift  <span class="ok">build succeeded</span></div>
+			<div class="msg ai"><p>Built a menu bar app like the post: the AC icon with the set temperature, and a panel with power, temperature, mode, fan, swing, Powerful and presets. Also a phone web app.</p></div>
+			<div class="msg me">i don't have admin rights</div>
+			<div class="msg ai"><p>Not needed. The app runs from your own folder, and the local network prompt is per user.</p></div>
+		</div>
+	</section>
+
+	<section class="phase">
+		<p class="n">4 · One for my partner</p>
+		<div class="chat">
+			<div class="msg me">it's working but what if i want an android app so my partner could use it on her phone,?</div>
+			<div class="msg ai"><p>A native Android app is better than the web app, because it doesn't need my Mac to be awake. But this Mac has no Android tools. Offered to install them, or build in the cloud on GitHub Actions.</p></div>
+			<div class="msg me">… i could do this yes</div>
+			<div class="msg me">ah no use my chrome session</div>
+			<div class="tool">create a private repo in my Chrome, upload 10 folders  <span class="ok">done</span></div>
+			<div class="msg ai"><p>Stopped at the secrets page, since entering secrets is mine to do. Gave me two <code>pbcopy</code> commands to paste the signing key and password myself.</p></div>
+			<div class="msg me">Done</div>
+			<div class="tool">clear clipboard · upload workflow · watch build  <span class="ok">APK built on the first try, 890 KB</span></div>
+			<div class="msg me">can you do that stick the ac ip? we can go to my router config in chrome maybe?</div>
+			<div class="tool">open the router admin page in my Chrome  <span class="ok">ASUS, login page</span></div>
+			<div class="msg ai"><p>Please sign in yourself, because I can't enter passwords for you. Then I'll add the AC to the DHCP list and ask before clicking Apply.</p></div>
+			<div class="msg me">done</div>
+			<div class="tool">turn on manual assignment · pick the AC from the client list · stage the row  <span class="ok">not saved yet</span></div>
+			<div class="msg me">go</div>
+			<div class="tool">Apply · check the AC still answers  <span class="ok">reachable at its reserved address</span></div>
+			<p class="aside">Me, looking back: I just let Claude handle my router config. First time I've ever let anything but my own hands touch that page. I was amazed it worked, and honestly a bit nervous until it stopped and asked before Apply.</p>
+		</div>
+	</section>
+
+	<section class="phase">
+		<p class="n">5 · Teaching it my AC</p>
+		<div class="chat">
+			<div class="msg me">I don't see btw the swing modes is not available?</div>
+			<div class="msg ai"><p>The driver doesn't know where this unit keeps the flap settings. Started a recorder that watches every value on the AC, and asked me to press the swing buttons on the physical remote.</p></div>
+			<div class="msg me">i didn't note down the order and there's no 3d or comfort airflow i think</div>
+			<div class="tool">diff recorded values against button presses  <span class="ok">mapped up/down and left/right flaps</span></div>
+		</div>
+	</section>
+
+	<section class="phase">
+		<p class="n">6 · Steering the look</p>
+		<p class="sub">The menu bar app worked, but it still looked like the first design. So I cropped a frame from the post's GIF and sent it.</p>
+		<div class="chat">
+			<div class="msg me">like where airflow is going?</div>
+			<figure class="shot" style="--w:380px"><img src="reference.jpg" alt="Frame from the post's GIF: a dark panel with a drawing of a wall AC blowing air, a large 23°C readout, a cream temperature slider, an Eco Mode toggle and tiles for Mode, Fan speed, Sleep and Airflow." width="833" height="869" loading="lazy"><figcaption>The reference, cropped from <a href="https://x.com/icanberk/status/2109031477484937571">@icanberk's post</a>.</figcaption></figure>
+			<div class="msg ai"><p>Read it as the airflow drawing: air streaks that point where the flaps point and sway when swing is on.</p></div>
+			<div class="msg me">i want that vibe of app as well btw</div>
+			<div class="msg ai"><p>Understood: the whole vibe, not just the airflow. Near-black background, warm cream accents, soft cards, a big light temperature readout. Replaced the entire UI.</p></div>
+			<div class="tool">rebuild Aircon.app · render the panel offscreen to check it  <span class="ok">relaunched</span></div>
+			<figure class="shot" style="--w:420px"><img src="mac-first.jpg" alt="The rebuilt Mac panel: room 26°C and 55% humidity, a drawing of the AC with soft air streaks below it, and a round power button." width="786" height="516" loading="lazy"><figcaption>First pass in the new style, on my Mac.</figcaption></figure>
+			<div class="msg me">* Powerful toggle where the reference has Eco, since your unit has no Eco mode.
+ it has an eco mode, and can i control this?</div>
+			<div class="msg ai"><p>Admitted it had assumed there was no Eco mode, because the driver puts it somewhere that doesn't exist on this unit. Recorded again while I pressed ECONO.</p></div>
+			<div class="msg me">did you get it? in the screenshot can i controll the airflow using it like dragging the air?</div>
+			<div class="msg ai"><p>Built it: drag the air to aim the flaps, double-click to toggle swing.</p></div>
+			<div class="msg me">let me see it first before commiting okay?</div>
+			<div class="msg me">let's just assume 02 yes, and i'm happy with the ui ship it in the apk as well</div>
+			<div class="tool">Eco toggle in Mac, web and Android · commit · push  <span class="ok">new APK</span></div>
+			<div class="msg me">what's the 55%</div>
+			<figure class="shot" style="--w:300px"><img src="mac-final.jpg" alt="The finished Mac panel: room 24°C with 55% boxed in red, the AC drawing with air streaks and a hint to drag the air, 25°C with an Eco Mode toggle and cream slider, and tiles for Mode Cool, Fan speed 3, Sleep Off and Airflow Fixed." width="344" height="491" loading="lazy"><figcaption>The finished panel. The red box is mine, from asking what the 55% was.</figcaption></figure>
+			<div class="msg ai"><p>Indoor humidity from the unit's sensor. Live, not hard-coded. Suggested labelling it.</p></div>
+		</div>
+		<div class="shots">
+			<figure class="shot"><img src="v1-web.jpg" alt="First design" width="337" height="730" loading="lazy"><figcaption>Where it started</figcaption></figure>
+			<figure class="shot"><img src="reference.jpg" style="object-position: left top" alt="Reference from the post" width="833" height="869" loading="lazy"><figcaption>What I pointed at</figcaption></figure>
+			<figure class="shot"><img src="mac-final.jpg" alt="Finished panel" width="344" height="491" loading="lazy"><figcaption>Where it ended, about 90 minutes later</figcaption></figure>
+		</div>
+		<p class="note">I never described the design in words. Four short messages and one screenshot did it: "similar ui to this", "where airflow is going", "that vibe", "dragging the air".</p>
+	</section>
+
+	<section class="phase">
+		<h2>What came out</h2>
+		<div class="out">
+			<div><h3>Mac menu bar</h3><p>Icon and set temperature in the top bar. Click for the full panel, drag the air to aim it.</p></div>
+			<div><h3>Android app</h3><p>Same design, for my partner's phone. Talks to the AC directly, no Mac needed.</p></div>
+			<div><h3>Phone web app</h3><p>The first version. Needs a helper running on the Mac, so the Android app replaced it.</p></div>
+		</div>
+		<p class="note">All three only work on our home Wi-Fi. And one step still needed Daikin's app: pairing the adapter to the network. That step is what the next log is about.</p>
+	</section>
+</div>
+</body>
+</html>

@@ -84,6 +84,16 @@ The mantra: thin prompts + thick artifacts and context + thin skills. When an id
 >
 > **After:** The same sentence, plus a link to a page with the mapping side by side and a two-lane timeline of when the work happens.
 
+## 14. Put pictures in
+
+I love pictures in a post. When I'm describing something visual, or showing UI Claude made, a screenshot beats a paragraph. Show the first version and the final one, and the reference I pointed at in between, so the reader sees the steering instead of taking my word for it.
+
+> **Before:** The first design worked but looked generic, so I sent a reference and it rebuilt the panel.
+>
+> **After:** The same sentence, plus the first screenshot, the frame I sent and the finished panel side by side.
+
+Put images next to the example under `public/examples/<name>/`. Give each one alt text that describes what's on screen, and a short caption in my voice. Cap the width so a tall phone screenshot doesn't take over the page, and check the page at phone and desktop width. Crop out anything personal: network names, addresses, usernames, other people's messages.
+
 ## Never
 
 - Hype adjectives: "revolutionary", "game-changing", "seamless", "cutting-edge" (except in a direct quote).
@@ -95,6 +105,6 @@ The mantra: thin prompts + thick artifacts and context + thin skills. When an id
 ## Shape of a log entry
 
 1. Opening: the normal way, where it broke for me (rules 2–3).
-2. One to three sections with short label headings, each with an example and, where it fits, an **Example prompt:** and **Use this for:** (rules 4–7, 13).
+2. One to three sections with short label headings, each with an example and, where it fits, an **Example prompt:**, **Use this for:** and screenshots (rules 4–7, 13–14).
 3. Optional FAQ for the obvious objections (rule 10).
 4. Closing paragraph with the real reason (rule 12).
