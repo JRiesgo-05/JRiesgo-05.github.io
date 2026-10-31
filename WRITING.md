@@ -40,7 +40,7 @@ A section runs: claim, then a concrete example from my work, then why it matters
 
 When the advice involves AI, show a real prompt under **Example prompt:**. Make it specific: name the thing, give constraints, say what the output should look like. A reader should be able to paste it and adapt it.
 
-> **Example prompt:** Explain Astro's content collections to me in terms of Django models and templates. Keep it under five sentences, and tell me where the comparison breaks.
+> **Example prompt:** Explain MCP to me in terms of FastAPI routes and Pydantic models. Keep it under five sentences, and tell me where the comparison breaks.
 
 ## 6. Follow examples with "Use this for:"
 
@@ -80,9 +80,9 @@ Close with one short personal paragraph: the actual reason I do this, and a one-
 
 The mantra: thin prompts + thick artifacts and context + thin skills. When an idea has structure (a mapping, a flow, a comparison), make an artifact: an HTML page, a diagram, a small interactive. Put it under `public/examples/<name>/` and link to it from the text with "Here's what that prompt made."
 
-> **Before:** A collection is like a Django model, and the comparison breaks because Astro runs at build time.
+> **Before:** An MCP tool is like a FastAPI route, and the comparison breaks because the model picks which one to call.
 >
-> **After:** The same sentence, plus a link to a page with the mapping side by side and a two-lane timeline of when the work happens.
+> **After:** The same sentence, plus a link to a page with the mapping side by side and a demo of the model picking a tool.
 
 ## 14. Put pictures in
 

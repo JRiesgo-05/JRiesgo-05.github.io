@@ -51,9 +51,9 @@ export const lab: LabItem[] = [
 
 export const examples = [
 	{
-		title: 'Astro content collections, explained with Django',
-		href: '/examples/astro-vs-django/',
-		body: 'A clickable pipeline, a live data view and a timeline, from one short prompt.',
+		title: 'MCP, explained with FastAPI',
+		href: '/examples/mcp-vs-fastapi/',
+		body: 'A clickable map, one function under two decorators and a demo of who picks the tool, from one short prompt.',
 	},
 	{
 		title: 'One slowdown, ten ways to explain it',

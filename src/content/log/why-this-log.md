@@ -27,9 +27,9 @@ Then I edit the answer down, hard. If I can't get it to a few sentences I could 
 
 **Example prompt:**
 
-> Explain Astro's content collections in terms of Django models and templates, as a one-page HTML artifact. Keep the text under five sentences, and show where the comparison breaks.
+> Explain MCP in terms of FastAPI routes and Pydantic models, as a one-page HTML artifact. Keep the text under five sentences, and show where the comparison breaks.
 
-[Here's what that prompt made.](/examples/astro-vs-django/) The last part matters. Every analogy breaks somewhere, and the place it breaks is usually the thing worth learning.
+[Here's what that prompt made.](/examples/mcp-vs-fastapi/) The last part matters. Every analogy breaks somewhere, and the place it breaks is usually the thing worth learning.
 
 I ask for an artifact instead of a chat reply because I actually read a page with a diagram. A wall of text I skim.
 

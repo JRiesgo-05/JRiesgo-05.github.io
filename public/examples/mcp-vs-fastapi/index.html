@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MCP, explained with FastAPI</title>
+<meta name="description" content="MCP servers mapped onto FastAPI routes and Pydantic models, drawn as a pipeline, a side-by-side decorator view and a demo of who picks the route.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;500&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Visual-first explainer: pipeline map, one function under two decorators, who-picks demo, cost cards. */
+:root {
+	--bg: #fcfcfa; --fg: #22262a; --muted: #59605c; --faint: #6c7570; --rule: #e4e8e3; --panel: #f1f3ef;
+	--accent: #4f6f5a; --fa: #00796b; --fa-soft: #d9f0ec; --mc: #6a4fb5; --mc-soft: #ebe5f8; --warn: #a3471f; --warn-soft: #f8e4da;
+	--serif: 'Instrument Serif', Georgia, serif; --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+	--mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #161917; --fg: #e6e9e6; --muted: #b3bab5; --faint: #8f9892; --rule: #2c322e; --panel: #1f2420;
+		--accent: #9fc1a9; --fa: #6fd3c4; --fa-soft: #123330; --mc: #b9a5f0; --mc-soft: #26203d; --warn: #f0a07a; --warn-soft: #3a2218;
+		color-scheme: dark;
+	}
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 880px; margin: 0 auto; padding: 48px 16px 72px; display: flex; flex-direction: column; gap: 64px; }
+a { color: var(--fg); text-decoration-color: var(--accent); text-underline-offset: 4px; }
+h1, h2 { font-family: var(--serif); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; }
+h2 { font-size: clamp(26px, 4vw, 32px); line-height: 1.15; }
+.label { font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin: 0; }
+.sub { margin: 0; color: var(--muted); max-width: 62ch; }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+section { display: flex; flex-direction: column; gap: 20px; }
+.fa { color: var(--fa); } .mc { color: var(--mc); }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
+.tag::before { content: ""; width: 10px; height: 10px; border-radius: 2px; background: currentColor; }
+button { font: inherit; color: inherit; }
+
+/* Header */
+.top { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: end; }
+.prompt { background: var(--panel); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.prompt p { margin: 0; }
+.tldr { border-left: 3px solid var(--accent); padding: 4px 0 4px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; }
+.tldr p { margin: 0; }
+
+/* 1. Pipeline */
+.pipe { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); }
+.pipe .head { padding-bottom: 10px; }
+.step { border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; border: 1.5px solid transparent; cursor: pointer; text-align: left; background: none; transition: transform .15s ease, border-color .15s ease; }
+.step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.step.fas { background: var(--fa-soft); }
+.step.mcs { background: var(--mc-soft); }
+.step .k { font-size: 12px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); }
+.step code { font-size: 12.5px; overflow-wrap: anywhere; }
+.step .w { font-size: 14px; color: var(--muted); }
+.link { display: flex; align-items: center; justify-content: center; }
+.link svg { width: 44px; height: 100%; min-height: 40px; overflow: visible; }
+.link line { stroke: var(--faint); stroke-width: 1.5; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+.down { display: flex; justify-content: center; height: 22px; }
+.down svg { width: 12px; height: 22px; }
+.down path { stroke: var(--faint); stroke-width: 1.5; fill: none; }
+.pair-on .step { border-color: var(--fg); transform: translateY(-1px); }
+.pair-on .link line { stroke: var(--fg); stroke-dasharray: none; }
+.row-wrap { display: contents; }
+.step.breaks.fas, .step.breaks.mcs { background: var(--warn-soft); }
+.step.breaks .k { color: var(--warn); }
+.note { min-height: 72px; background: var(--panel); border-radius: 6px; padding: 14px 16px; font-size: 15px; display: flex; gap: 12px; align-items: flex-start; }
+.note b { font-weight: 500; }
+
+/* 2. One function, two decorators */
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; align-self: flex-start; }
+.seg button { background: none; border: 0; padding: 8px 14px; cursor: pointer; font-size: 14px; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"].fa-btn { background: var(--fa-soft); color: var(--fa); }
+.seg button[aria-pressed="true"].mc-btn { background: var(--mc-soft); color: var(--mc); }
+.code2 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.panel { border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.panel .ph { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; background: var(--panel); font-size: 13px; }
+pre { margin: 0; padding: 12px 14px; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; overflow-x: auto; }
+pre .dec { padding: 1px 3px; border-radius: 3px; }
+pre .dec.fa { background: var(--fa-soft); } pre .dec.mc { background: var(--mc-soft); }
+pre .c { color: var(--faint); }
+pre .same { color: var(--fg); }
+
+/* 3. Who picks */
+.asks { display: flex; flex-wrap: wrap; gap: 8px; }
+.asks button { background: var(--panel); border: 1.5px solid transparent; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 14px; text-align: left; }
+.asks button[aria-pressed="true"] { border-color: var(--fg); }
+.toggle { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 15px; user-select: none; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+.lanes2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 20px; align-items: start; }
+.lane2 { border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.lane2 p { margin: 0; font-size: 15px; }
+.fixed { font-family: var(--mono); font-size: 12.5px; background: var(--fa-soft); border-radius: 4px; padding: 8px 10px; overflow-wrap: anywhere; }
+.tools { display: flex; flex-direction: column; gap: 8px; }
+.tool { border: 1.5px solid var(--rule); border-radius: 6px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; transition: border-color .15s ease, background .15s ease, opacity .15s ease; }
+.tool .n { font-family: var(--mono); font-size: 12.5px; }
+.tool .d { font-size: 13px; color: var(--muted); }
+.tool.pick { border-color: var(--mc); background: var(--mc-soft); }
+.tool.pick .n::after { content: "  ← picked"; color: var(--mc); font-family: var(--sans); font-size: 12px; }
+.tool.maybe { border-style: dashed; border-color: var(--warn); }
+.tool.dim { opacity: .45; }
+.args { font-family: var(--mono); font-size: 12.5px; background: var(--mc-soft); border-radius: 4px; padding: 8px 10px; overflow-wrap: anywhere; }
+.args.unsure { background: var(--warn-soft); color: var(--warn); }
+
+/* 4. Costs */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.card { border-radius: 6px; background: var(--warn-soft); padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.card svg { width: 100%; height: 86px; }
+.card h3 { margin: 0; font-size: 17px; font-weight: 500; }
+.card p { margin: 0; font-size: 15px; color: var(--muted); }
+.ic-stroke { stroke: var(--warn); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.ic-fill { fill: var(--warn); }
+.ic-soft { fill: var(--bg); stroke: var(--warn); stroke-width: 1.5; }
+.ic-text { fill: var(--warn); font-family: var(--mono); font-size: 11px; }
+
+footer { font-size: 14px; color: var(--faint); display: flex; flex-wrap: wrap; gap: 16px; border-top: 1px solid var(--rule); padding-top: 16px; }
+
+@media (max-width: 680px) {
+	.top, .code2, .lanes2, .cards { grid-template-columns: minmax(0, 1fr); }
+	.pipe { grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); }
+	.link svg { width: 20px; }
+	.step { padding: 10px; }
+	.step .w { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display: flex; flex-direction: column; gap: 24px;">
+	<a href="/" class="label" style="text-decoration: none;">← Jerimiah Riesgo</a>
+	<div class="top">
+		<div style="display: flex; flex-direction: column; gap: 16px;">
+			<h1><span class="mc">MCP</span>, explained with <span class="fa">FastAPI</span></h1>
+			<div class="prompt">
+				<span class="label">The prompt</span>
+				<p>Explain MCP in terms of FastAPI routes and Pydantic models, as a one-page HTML artifact. Keep the text under five sentences, and show where the comparison breaks.</p>
+			</div>
+		</div>
+		<div class="tldr">
+			<span class="label">In five sentences</span>
+			<p>An MCP server is a FastAPI app whose client is a model, not a browser.</p>
+			<p>A tool is a route: a name, a docstring and typed inputs that become a JSON schema.</p>
+			<p>A resource is a GET endpoint: data to read, nothing runs.</p>
+			<p><code>tools/list</code> is <code>/openapi.json</code>: the menu the client reads first.</p>
+			<p>It breaks at <em>who calls</em>: your code picks the route, the model picks the tool.</p>
+		</div>
+	</div>
+</header>
+
+<section aria-labelledby="s1">
+	<span class="label">1 · The map</span>
+	<h2 id="s1">Same parts, different caller</h2>
+	<p class="sub">Read each column top to bottom. Dashed lines join the parts that do the same job. Click any step to see how they line up.</p>
+	<div class="pipe" id="pipe">
+		<div class="head"><span class="tag fa">FastAPI</span></div><div></div><div class="head"><span class="tag mc">MCP server</span></div>
+	</div>
+	<div class="note" id="note" aria-live="polite"><span class="label" style="padding-top: 2px;">Step</span><span id="noteText">Click a step above.</span></div>
+</section>
+
+<section aria-labelledby="s2">
+	<span class="label">2 · The code</span>
+	<h2 id="s2">One function, two decorators</h2>
+	<p class="sub">The function body doesn't change. Switch the decorator and look at what the client gets to read: an OpenAPI path, or a tool in <code>tools/list</code>. The docstring is the part that matters more on the MCP side.</p>
+	<div class="seg" role="group" aria-label="Decorator">
+		<button type="button" class="fa-btn" data-side="fa" aria-pressed="true">FastAPI</button>
+		<button type="button" class="mc-btn" data-side="mc" aria-pressed="false">MCP</button>
+	</div>
+	<div class="code2">
+		<div class="panel">
+			<div class="ph"><span class="mono">tickets.py</span><span class="label" id="codeTag">route</span></div>
+			<pre id="codeA"></pre>
+		</div>
+		<div class="panel">
+			<div class="ph"><span class="mono" id="genName">GET /openapi.json</span><span class="label">what the client reads</span></div>
+			<pre id="codeB"></pre>
+		</div>
+	</div>
+</section>
+
+<section aria-labelledby="s3">
+	<span class="label">3 · Where it breaks</span>
+	<h2 id="s3">Who picks the route</h2>
+	<p class="sub">Pick something a person might say. In FastAPI, the frontend already knows which URL to call. In MCP, the model reads the tool descriptions and chooses. Then make the descriptions vague and watch the choice fall apart. (An illustration, not a live model.)</p>
+	<div class="asks" id="asks" role="group" aria-label="What the person says"></div>
+	<label class="toggle"><input type="checkbox" id="vague"> Write vague descriptions</label>
+	<div class="lanes2">
+		<div class="lane2">
+			<span class="tag fa">FastAPI</span>
+			<p id="faSays"></p>
+			<div class="fixed" id="faCall"></div>
+		</div>
+		<div class="lane2">
+			<span class="tag mc">MCP</span>
+			<p class="mono" style="font-size: 12px; color: var(--faint);">tools/list, as the model sees it</p>
+			<div class="tools" id="tools"></div>
+			<div class="args" id="mcCall"></div>
+		</div>
+	</div>
+</section>
+
+<section aria-labelledby="s4">
+	<span class="label">4 · What that costs you</span>
+	<h2 id="s4">Three things FastAPI never made you think about</h2>
+	<div class="cards">
+		<div class="card">
+			<svg viewBox="0 0 200 86" aria-hidden="true">
+				<rect class="ic-soft" x="24" y="16" width="92" height="54" rx="4"/>
+				<text class="ic-text" x="34" y="36">"""Create a</text><text class="ic-text" x="34" y="52">ticket..."""</text>
+				<path class="ic-stroke" d="M126 43 H150 M142 35 L150 43 L142 51"/>
+				<circle class="ic-soft" cx="172" cy="43" r="14"/><path class="ic-stroke" d="M166 43 L171 48 L179 38"/>
+			</svg>
+			<h3>Descriptions are code</h3>
+			<p>In FastAPI a docstring is documentation. In MCP it's how the model routes. Rewording one changes which tool gets called.</p>
+		</div>
+		<div class="card">
+			<svg viewBox="0 0 200 86" aria-hidden="true">
+				<rect class="ic-soft" x="20" y="14" width="160" height="58" rx="4"/>
+				<rect class="ic-fill" x="26" y="20" width="22" height="46" rx="2"/><rect class="ic-fill" x="52" y="20" width="22" height="46" rx="2"/><rect class="ic-fill" x="78" y="20" width="22" height="46" rx="2"/>
+				<text class="ic-text" x="110" y="47">your task</text>
+			</svg>
+			<h3>Every tool costs context</h3>
+			<p>An unused route costs nothing. An unused tool's name, description and schema sit in the model's context window on every turn.</p>
+		</div>
+		<div class="card">
+			<svg viewBox="0 0 200 86" aria-hidden="true">
+				<rect class="ic-soft" x="20" y="22" width="64" height="42" rx="4"/>
+				<text class="ic-text" x="28" y="40">result:</text><text class="ic-text" x="28" y="56" style="font-weight: 700;">"ignore…"</text>
+				<path class="ic-stroke" d="M94 43 H120 M112 35 L120 43 L112 51"/>
+				<circle class="ic-soft" cx="150" cy="43" r="20"/><text x="144" y="48" style="fill: var(--warn); font-family: var(--mono); font-size: 14px; font-weight: 700;">!!</text>
+			</svg>
+			<h3>Output becomes input</h3>
+			<p>A FastAPI response goes to code that parses it. A tool result goes straight into the prompt, so text inside it can try to steer the model.</p>
+		</div>
+	</div>
+</section>
+
+<footer>
+	<span>Made with Claude Code from the prompt at the top.</span>
+	<a href="/#principles">Back to principles</a>
+</footer>
+</div>
+
+<script>
+(() => {
+	// 1. Pipeline map
+	const steps = [
+		{ k: 'App', fa: ['app = FastAPI()', 'one server, many routes'], mc: ['mcp = FastMCP("tickets")', 'one server, many tools'],
+		  note: 'Both start with an app object you hang things on. The MCP Python SDK even borrows the shape: FastMCP, decorators, type hints.' },
+		{ k: 'Inputs', fa: ['class TicketIn(BaseModel)', 'Pydantic validates the body'], mc: ['def create_ticket(title: str, …)', 'type hints become inputSchema'],
+		  note: 'Same idea: you write Python types once, and the framework turns them into JSON Schema and validates what comes in.' },
+		{ k: 'Action', fa: ['@app.post("/tickets")', 'a route that changes things'], mc: ['@mcp.tool()', 'a tool that changes things'],
+		  note: 'A tool is a route the model can call. Name, docstring and arguments are its whole public surface.' },
+		{ k: 'Read', fa: ['@app.get("/tickets/{id}")', 'returns data'], mc: ['@mcp.resource("ticket://{id}")', 'data the client can attach'],
+		  note: 'A resource is closer to a GET endpoint: something to read, not something to do. The client app decides when to attach it.' },
+		{ k: 'Discovery', fa: ['GET /openapi.json', 'read by tools and humans'], mc: ['tools/list', 'read by the model'],
+		  note: 'Both publish a menu. The difference is the reader: OpenAPI feeds Swagger UI and code generators, tools/list goes into the model\'s context.' },
+		{ k: 'Transport', fa: ['HTTP + uvicorn', 'request, response'], mc: ['JSON-RPC over stdio or HTTP', 'request, response'],
+		  note: 'Under the hood it\'s still request and response. MCP wraps it in JSON-RPC and can run as a local process over stdio.' },
+		{ k: 'Caller', fa: ['your frontend code', 'calls a fixed URL'], mc: ['the model', 'picks a tool from descriptions'], breaks: true,
+		  note: 'This is where the analogy breaks. In FastAPI, a developer decided which route each button calls. In MCP, the model decides at runtime, from the words you wrote.' },
+	];
+	const pipe = document.getElementById('pipe');
+	const noteText = document.getElementById('noteText');
+	const arrow = () => {
+		const d = document.createElement('div'); d.className = 'down';
+		d.innerHTML = '<svg viewBox="0 0 12 22" aria-hidden="true"><path d="M6 0 V20 M1 15 L6 20 L11 15"/></svg>';
+		return d;
+	};
+	const groups = [];
+	steps.forEach((s, i) => {
+		const g = document.createElement('div'); g.className = 'row-wrap';
+		const mk = (side) => {
+			const b = document.createElement('button');
+			b.type = 'button';
+			b.className = 'step ' + (side === 'fa' ? 'fas' : 'mcs') + (s.breaks ? ' breaks' : '');
+			b.innerHTML = '<span class="k">' + s.k + '</span><code></code><span class="w"></span>';
+			b.querySelector('code').textContent = s[side][0];
+			b.querySelector('.w').textContent = s[side][1];
+			b.addEventListener('click', () => select(i));
+			return b;
+		};
+		const link = document.createElement('div'); link.className = 'link';
+		link.innerHTML = '<svg viewBox="0 0 44 10" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="5" x2="44" y2="5"/></svg>';
+		g.append(mk('fa'), link, mk('mc'));
+		pipe.append(g);
+		groups.push(g);
+		if (i < steps.length - 1) { pipe.append(arrow(), document.createElement('div'), arrow()); }
+	});
+	function select(i) {
+		groups.forEach((g, j) => g.classList.toggle('pair-on', i === j));
+		noteText.innerHTML = '<b>' + steps[i].k + '.</b> ' + steps[i].note;
+	}
+	select(steps.length - 1);
+
+	// 2. One function, two decorators
+	const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+	const body = [
+		'def create_ticket(title: str, priority: Literal["low", "high"] = "low") -> Ticket:',
+		'    """Create a support ticket. Use when the user reports something broken."""',
+		'    return db.insert(Ticket(title=title, priority=priority))',
+	].map(esc).join('\n');
+	const code = {
+		fa: {
+			tag: 'route', gen: 'GET /openapi.json',
+			a: '<span class="c">from fastapi import FastAPI</span>\n<span class="c">app = FastAPI()</span>\n\n<span class="dec fa">@app.post("/tickets")</span>\n<span class="same">' + body + '</span>',
+			b: esc('"/tickets": {\n  "post": {\n    "summary": "Create Ticket",\n    "description": "Create a support ticket. Use when…",\n    "parameters": [\n      { "name": "title", "in": "query", "required": true },\n      { "name": "priority", "in": "query",\n        "schema": { "enum": ["low", "high"] } }\n    ]\n  }\n}'),
+		},
+		mc: {
+			tag: 'tool', gen: 'tools/list',
+			a: '<span class="c">from mcp.server.fastmcp import FastMCP</span>\n<span class="c">mcp = FastMCP("tickets")</span>\n\n<span class="dec mc">@mcp.tool()</span>\n<span class="same">' + body + '</span>',
+			b: esc('{\n  "name": "create_ticket",\n  "description": "Create a support ticket. Use when\n                  the user reports something broken.",\n  "inputSchema": {\n    "type": "object",\n    "properties": {\n      "title": { "type": "string" },\n      "priority": { "enum": ["low", "high"] }\n    },\n    "required": ["title"]\n  }\n}'),
+		},
+	};
+	const segBtns = document.querySelectorAll('.seg button');
+	function show(side) {
+		segBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.side === side)));
+		document.getElementById('codeA').innerHTML = code[side].a;
+		document.getElementById('codeB').innerHTML = code[side].b;
+		document.getElementById('codeTag').textContent = code[side].tag;
+		document.getElementById('genName').textContent = code[side].gen;
+	}
+	segBtns.forEach((b) => b.addEventListener('click', () => show(b.dataset.side)));
+	show('fa');
+
+	// 3. Who picks
+	const tools = [
+		{ n: 'search_tickets', good: 'Find existing tickets by keyword. Use before creating one, to avoid duplicates.', vague: 'Ticket helper.' },
+		{ n: 'create_ticket', good: 'Create a support ticket. Use when the user reports something broken.', vague: 'Handles tickets.' },
+		{ n: 'get_runbook', good: 'Return the on-call runbook for a named service.', vague: 'Gets docs.' },
+	];
+	const asks = [
+		{ say: 'Checkout is down for everyone', fa: 'The user clicked "Report a problem". The button was wired to one URL when the page was built.', faCall: 'POST /tickets  { title: "Checkout is down", priority: "high" }',
+		  pick: 1, args: 'create_ticket(title="Checkout is down for everyone", priority="high")' },
+		{ say: 'Did anyone already report the login bug?', fa: 'The user typed in the search box. Same as always: the search box calls the search URL.', faCall: 'GET /tickets?q=login',
+		  pick: 0, args: 'search_tickets(query="login bug")' },
+		{ say: 'How do I restart the payments service?', fa: 'No button does this. Someone has to build a page and a route before anyone can ask.', faCall: '(no route for this)',
+		  pick: 2, args: 'get_runbook(service="payments")' },
+	];
+	const asksEl = document.getElementById('asks');
+	const toolsEl = document.getElementById('tools');
+	const vague = document.getElementById('vague');
+	let current = 0;
+	asks.forEach((a, i) => {
+		const b = document.createElement('button');
+		b.type = 'button'; b.textContent = '"' + a.say + '"';
+		b.addEventListener('click', () => { current = i; render(); });
+		asksEl.append(b);
+	});
+	const toolEls = tools.map((t) => {
+		const d = document.createElement('div'); d.className = 'tool';
+		d.innerHTML = '<span class="n"></span><span class="d"></span>';
+		d.querySelector('.n').textContent = t.n;
+		toolsEl.append(d);
+		return d;
+	});
+	function render() {
+		const a = asks[current], v = vague.checked;
+		[...asksEl.children].forEach((b, i) => b.setAttribute('aria-pressed', String(i === current)));
+		document.getElementById('faSays').textContent = a.fa;
+		document.getElementById('faCall').textContent = a.faCall;
+		toolEls.forEach((el, i) => {
+			el.querySelector('.d').textContent = v ? tools[i].vague : tools[i].good;
+			el.className = 'tool ' + (v ? 'maybe' : (i === a.pick ? 'pick' : 'dim'));
+		});
+		const call = document.getElementById('mcCall');
+		call.classList.toggle('unsure', v);
+		call.textContent = v ? 'Three tools all sound like they might fit. The model guesses, or asks you which one.' : a.args;
+	}
+	vague.addEventListener('change', render);
+	render();
+})();
+</script>
+</body>
+</html>
