@@ -27,7 +27,7 @@ Then I edit the answer down, hard. If I can't get it to a few sentences I could 
 
 **Example prompt:**
 
-> Explain MCP in terms of FastAPI routes and Pydantic models, as a one-page HTML artifact. Keep the text under five sentences, and show where the comparison breaks.
+> Explain MCP in terms of FastAPI routes and Pydantic models, as a one-page artifact with visualizations and animated examples. Keep the text under five sentences, and show where the comparison breaks.
 
 [Here's what that prompt made.](/examples/mcp-vs-fastapi/) The last part matters. Every analogy breaks somewhere, and the place it breaks is usually the thing worth learning.
 
