@@ -55,7 +55,7 @@ The same goes for how we look things up. Searching Google and asking an agent ar
 
 **Example prompt:**
 
-> Before writing any code, describe the inputs this feature gets and the output it must produce. Then tell me whether code is the right layer to solve it.
+> Before you write any code, tell me what goes into this feature and what has to come out. Then tell me if it needs code at all, or if a config change, a spreadsheet or a fix to the process would do.
 
 **Use this for:** new features · automation requests · any task where the first idea is "write a script"
 

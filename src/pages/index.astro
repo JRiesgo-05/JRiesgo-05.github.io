@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import FormattedDate from '../components/FormattedDate.astro';
 import Base from '../layouts/Base.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { LINKEDIN_URL, SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { lab, type Status } from '../data/lab';
 import FeedbackQuote from '../components/FeedbackQuote.astro';
 import { feedback } from '../data/feedback';
@@ -30,7 +30,7 @@ const principles = [
 			{ href: 'https://x.com/karpathy/status/2105819303471976479', label: 'Karpathy on understanding LLM outputs' },
 		],
 		quote: {
-			text: 'Yeah, when I saw what [a colleague] made, I told you all. Now .pptx feels like a dinosaur.',
+			text: 'When I saw what you made, my .pptx suddenly felt like a dinosaur.',
 			by: 'A teammate, translated from Filipino',
 		},
 	},
@@ -44,7 +44,7 @@ const principles = [
 		title: 'Change the angle',
 		body: "Code is one layer over the real job, which is turning inputs into outcomes. Googling and asking an agent are the same act: moving information into my head. The agent just moves it faster, so I spend the saved time one level up.",
 		prompt:
-			'Before writing any code, describe the inputs this feature gets and the output it must produce. Then tell me whether code is the right layer to solve it.',
+			"Before you write any code, tell me what goes into this feature and what has to come out. Then tell me if it needs code at all, or if a config change, a spreadsheet or a fix to the process would do.",
 	},
 ];
 
@@ -53,14 +53,16 @@ const workshops = [
 		date: 'Oct 16, 2026',
 		title: 'Agent Building Workshop',
 		href: '/workshops/agent-building/',
-		audience: 'Internal, about 30 colleagues from the COO to QA. Slides only, speaker notes removed.',
+		audience: 'Internal, about 30 colleagues from the COO to QA.',
+		trimmed: true,
 		body: 'The follow-up for people who wanted to build. We built one ticket-triage agent end to end: tools, MCP, LLM as a judge and model routing on day one, then how to test it before it ships on day two.',
 	},
 	{
 		date: 'Sep 15–16, 2026',
 		title: 'AI Fluency & Claude Code Workshop',
 		href: '/workshops/ai-fluency/',
-		audience: 'Internal, about 30 colleagues from the COO to QA. Slides only, speaker notes removed.',
+		audience: 'Internal, about 30 colleagues from the COO to QA.',
+		trimmed: true,
 		body: 'Two days for everyone, not just engineers. We started with how a model reads (tokens, embeddings, the context window) and ended with the way I actually work in Claude Code every day.',
 	},
 	{
@@ -217,6 +219,12 @@ const work = [
 						<p class="faint" style="margin: 0;">
 							{w.audience}
 						</p>
+						{w.trimmed && (
+							<p class="faint" style="margin: 0;">
+								First 10 slides only, cut off on purpose.{' '}
+								<a href={LINKEDIN_URL}>Message me</a> for the complete deck.
+							</p>
+						)}
 					</div>
 				</div>
 			))

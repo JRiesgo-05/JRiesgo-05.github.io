@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 import { existsSync } from 'node:fs';
 import { defineConfig, fontProviders } from 'astro/config';
 
-// GitHub Pages serves public/examples/<name>/index.html at /examples/<name>/.
+// GitHub Pages serves public/<folder>/<name>/index.html at /<folder>/<name>/.
 // The dev server doesn't, so rewrite folder URLs to their index.html.
 /** @type {import('vite').Plugin} */
 const publicFolderIndex = {
@@ -14,7 +14,7 @@ const publicFolderIndex = {
 	configureServer(server) {
 		server.middlewares.use((req, _res, next) => {
 			const path = req.url?.split('?')[0];
-			if (path?.startsWith('/examples/') && path.endsWith('/') && existsSync(`public${path}index.html`)) {
+			if (path?.endsWith('/') && path !== '/' && existsSync(`public${path}index.html`)) {
 				req.url = `${path}index.html`;
 			}
 			next();
